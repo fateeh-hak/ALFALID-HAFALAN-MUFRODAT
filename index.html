@@ -86,9 +86,9 @@
     // Database Mufrodat Berdasarkan Hari (1-30)
     const MUFRODAT_DB = {
       1: {
-        title: "Perabotan Rumah", titleAr: "أَثَاثُ المَنْزِلِ", data: [
-          { id: 1, arab: "سَرِيْرٌ", latin: "Sarirun", arti: "Ranjang", contoh: "أَنَا أَنَامُ عَلَى السَّرِيْرِ", deskripsi: "Tempat untuk beristirahat dan tidur." },
-          { id: 2, arab: "مِخَدَّةٌ", latin: "Mikhaddatun", arti: "Bantal/Guling", contoh: "الْمِخَدَّةُ نَاعِمَةٌ جِدًّا", deskripsi: "Alas kepala saat tidur agar nyaman." },
+        title: "Isi Rumah & Bangunan", titleAr: "أَثَاثُ المَنْزِلِ", data: [
+          { id: 1, arab: "سَرِيْرٌ", latin: "Sarirun", arti: "Kasur", contoh: "أَنَا أَنَامُ عَلَى السَّرِيْرِ", deskripsi: "Tempat untuk beristirahat dan tidur." },
+          { id: 2, arab: "مِخَدَّةٌ", latin: "Mikhaddatun", arti: "Bantal", contoh: "الْمِخَدَّةُ نَاعِمَةٌ جِدًّا", deskripsi: "Alas kepala saat tidur agar nyaman." },
           { id: 3, arab: "خِزَانَةٌ", latin: "Khizanatun", arti: "Lemari", contoh: "أَضَعُ الْمَلَابِسَ فِي الْخِزَانَةِ", deskripsi: "Tempat menyimpan pakaian atau barang." },
           { id: 4, arab: "مِرْآةٌ", latin: "Mir-atun", arti: "Cermin", contoh: "أَنْظُرُ إِلَى الْمِرْآةِ كُلَّ صَبَاحٍ", deskripsi: "Benda untuk melihat pantulan diri." },
           { id: 5, arab: "سَجَّادَةٌ", latin: "Sajjadatun", arti: "Sajadah", contoh: "أُصَلِّي عَلَى السَّجَّادَةِ", deskripsi: "Alas untuk melaksanakan ibadah shalat." },
@@ -114,7 +114,7 @@
         ]
       },
       3: {
-        title: "Makanan & Buah", titleAr: "المَأْكُولَاتُ وَالفَوَاكِهُ", data: [
+        title: "Buah & Makanan", titleAr: "المَأْكُولَاتُ وَالفَوَاكِهُ", data: [
           { id: 1, arab: "تُفَّاحٌ", latin: "Tuffahun", arti: "Apel", contoh: "آكُلُ التُّفَّاحَةَ الْحَمْرَاءَ", deskripsi: "Buah bulat yang rasanya manis." },
           { id: 2, arab: "مَوْزٌ", latin: "Mauzun", arti: "Pisang", contoh: "الْمَوْزُ لَوْنُهُ أَصْفَرُ", deskripsi: "Buah panjang berwarna kuning." },
           { id: 3, arab: "عِنَبٌ", latin: "Inabun", arti: "Anggur", contoh: "الْعِنَبُ لَذِيْذٌ جِدًّا", deskripsi: "Buah kecil yang tumbuh merambat." },
@@ -752,6 +752,14 @@
         }
       };
 
+      const handleResetHistory = () => {
+        if (window.confirm("Apakah kamu yakin ingin menghapus semua riwayat belajar? Data yang sudah dihapus tidak dapat dikembalikan.")) {
+          const localHistoryKey = `alfal_history_${participantName}`;
+          localStorage.removeItem(localHistoryKey);
+          setMyScores([]);
+        }
+      };
+
       const sendToGoogleSheet = async (name, scoreValue, category, audioData, day, type) => {
         if (!GOOGLE_SCRIPT_URL) {
           console.warn("GOOGLE_SCRIPT_URL kosong, data tidak dikirim ke Google Sheets.");
@@ -1033,7 +1041,7 @@
               { id: 'quiz', icon: Award, label: 'Kuis' },
               { id: 'riwayat', icon: History, label: 'Riwayat' }
             ].map(item => {
-              const Icon = item.icon;
+              const IconComponent = item.icon;
               const isActive = activeTab === item.id;
               return (
                 <button
@@ -1042,7 +1050,7 @@
                   className={`flex flex-col items-center p-2 rounded-xl transition-all ${isActive ? 'text-emerald-600' : 'text-slate-400 hover:text-emerald-500'}`}
                 >
                   <div className={`p-1.5 rounded-lg mb-1 ${isActive ? 'bg-emerald-50' : ''}`}>
-                    <Icon size={20} />
+                    <IconComponent size={20} />
                   </div>
                   <span className="text-[10px] font-black">{item.label}</span>
                 </button>
@@ -1451,8 +1459,18 @@
               <div className="bg-white rounded-[2rem] md:rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden animate-in fade-in duration-500 mb-10">
                 <div className="p-6 md:p-8 border-b border-slate-50 bg-slate-50/50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                   <h2 className="text-xl md:text-2xl font-black text-slate-900 tracking-tight">Perjalanan Hafalanku</h2>
-                  <div className="bg-white px-4 py-2 rounded-xl shadow-sm border border-slate-100 font-black text-emerald-600 text-[10px] md:text-sm shadow-inner self-start sm:self-auto">
-                    {myScores.length} Kuis Selesai
+                  <div className="flex items-center gap-2 w-full sm:w-auto">
+                    {myScores.length > 0 && (
+                      <button
+                        onClick={handleResetHistory}
+                        className="flex items-center justify-center gap-2 bg-red-50 text-red-500 px-4 py-2 rounded-xl border border-red-100 font-bold text-[10px] md:text-sm shadow-sm hover:bg-red-100 transition-colors"
+                      >
+                        <Trash2 size={16} /> Reset
+                      </button>
+                    )}
+                    <div className="bg-white px-4 py-2 rounded-xl shadow-sm border border-slate-100 font-black text-emerald-600 text-[10px] md:text-sm shadow-inner w-full sm:w-auto text-center">
+                      {myScores.length} Kuis Selesai
+                    </div>
                   </div>
                 </div>
                 

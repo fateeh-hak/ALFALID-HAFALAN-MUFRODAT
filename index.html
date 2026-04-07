@@ -86,9 +86,9 @@
     // Database Mufrodat Berdasarkan Hari (1-30)
     const MUFRODAT_DB = {
       1: {
-        title: "Isi Rumah & Bangunan", titleAr: "أَثَاثُ المَنْزِلِ", data: [
+        title: "Perabotan Rumah", titleAr: "أَثَاثُ المَنْزِلِ", data: [
           { id: 1, arab: "سَرِيْرٌ", latin: "Sarirun", arti: "Ranjang", contoh: "أَنَا أَنَامُ عَلَى السَّرِيْرِ", deskripsi: "Tempat untuk beristirahat dan tidur." },
-          { id: 2, arab: "مِخَدَّةٌ", latin: "Mikhaddatun", arti: "Bantal/guling", contoh: "الْمِخَدَّةُ نَاعِمَةٌ جِدًّا", deskripsi: "Alas kepala saat tidur agar nyaman." },
+          { id: 2, arab: "مِخَدَّةٌ", latin: "Mikhaddatun", arti: "Bantal", contoh: "الْمِخَدَّةُ نَاعِمَةٌ جِدًّا", deskripsi: "Alas kepala saat tidur agar nyaman." },
           { id: 3, arab: "خِزَانَةٌ", latin: "Khizanatun", arti: "Lemari", contoh: "أَضَعُ الْمَلَابِسَ فِي الْخِزَانَةِ", deskripsi: "Tempat menyimpan pakaian atau barang." },
           { id: 4, arab: "مِرْآةٌ", latin: "Mir-atun", arti: "Cermin", contoh: "أَنْظُرُ إِلَى الْمِرْآةِ كُلَّ صَبَاحٍ", deskripsi: "Benda untuk melihat pantulan diri." },
           { id: 5, arab: "سَجَّادَةٌ", latin: "Sajjadatun", arti: "Sajadah", contoh: "أُصَلِّي عَلَى السَّجَّادَةِ", deskripsi: "Alas untuk melaksanakan ibadah shalat." },
@@ -114,7 +114,7 @@
         ]
       },
       3: {
-        title: "Buah & Makanan", titleAr: "المَأْكُولَاتُ وَالفَوَاكِهُ", data: [
+        title: "Makanan & Buah", titleAr: "المَأْكُولَاتُ وَالفَوَاكِهُ", data: [
           { id: 1, arab: "تُفَّاحٌ", latin: "Tuffahun", arti: "Apel", contoh: "آكُلُ التُّفَّاحَةَ الْحَمْرَاءَ", deskripsi: "Buah bulat yang rasanya manis." },
           { id: 2, arab: "مَوْزٌ", latin: "Mauzun", arti: "Pisang", contoh: "الْمَوْزُ لَوْنُهُ أَصْفَرُ", deskripsi: "Buah panjang berwarna kuning." },
           { id: 3, arab: "عِنَبٌ", latin: "Inabun", arti: "Anggur", contoh: "الْعِنَبُ لَذِيْذٌ جِدًّا", deskripsi: "Buah kecil yang tumbuh merambat." },
@@ -306,7 +306,7 @@
           { id: 7, arab: "قِدْرٌ", latin: "Qidrun", arti: "Panci", contoh: "الطَّعَامُ فِي الْقِدْرِ سَاخِنٌ", deskripsi: "Wadah masak yang dalam." },
           { id: 8, arab: "مِغْرَفَةٌ", latin: "Mighrafatun", arti: "Sendok Sayur", contoh: "أَسْتَعْمِلُ الْمِغْرَفَةَ لِلْحِسَاءِ", deskripsi: "Sendok besar untuk kuah sayur." },
           { id: 9, arab: "فِنْجَانٌ", latin: "Finjaanun", arti: "Cangkir", contoh: "أَشْرَبُ القَهْوَةَ فِي الْفِنْجَانِ", deskripsi: "Gelas kecil biasanya untuk kopi/teh." },
-          { id: 10, arab: "مَائِدَةٌ", latin: "Maaidatun", arti: "Meja Makan", contoh: "نَجْلِسُ حَوْلَ المَائِدَةِ", deskripsi: "Tempat menghidangkan makanan." },
+          { id: 10, arab: "سَفْرَةٌ", latin: "Safratun", arti: "Meja Makan", contoh: "نَجْلِسُ حَوْلَ السَّفْرَةِ", deskripsi: "Tempat menghidangkan makanan." },
         ]
       },
       17: {
@@ -553,7 +553,7 @@
       const startRecording = async () => {
         try {
           if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-            alert("Maaf, browser Anda tidak mendukung fitur rekam suara. Pastikan membuka web ini melalui Google Chrome/Safari versi terbaru (HTTPS) bukan dari WhatsApp.");
+            alert("Maaf, browser Anda tidak mendukung fitur rekam suara. Pastikan membuka web ini melalui Google Chrome/Safari versi terbaru (HTTPS).");
             return;
           }
 
@@ -633,14 +633,20 @@
       }, [selectedDay]);
 
       const playAudio = (text) => {
-        // Deteksi apakah pengguna menggunakan iPhone/iPad
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
         
-        // Tampilkan peringatan tombol Silent khusus iOS (Hanya muncul sekali)
-        if (isIOS && !hasShownIosHint) {
+        if ((isIOS || isSafari) && !hasShownIosHint) {
             setShowIosHint(true);
             setHasShownIosHint(true);
             setTimeout(() => setShowIosHint(false), 7000);
+        }
+
+        // PENGECUALIAN SAFARI & iOS: 
+        // Wajib dieksekusi secara instan dari onClick, dilarang pakai Promise/Fetch.
+        if (isIOS || isSafari) {
+           fallbackAudio(text + " .");
+           return;
         }
 
         try {
@@ -648,12 +654,11 @@
           const url = `https://translate.googleapis.com/translate_tts?client=gtx&ie=UTF-8&tl=ar&q=${encodeURIComponent(clearText)}`;
           const audio = new Audio(url);
           audio.playbackRate = 0.85; 
-          audio.load(); // Paksa muat data audio untuk menghindari blokir iOS
+          audio.load(); 
           
           const playPromise = audio.play();
           if (playPromise !== undefined) {
             playPromise.catch((err) => {
-              console.warn("Gagal memutar audio via URL, beralih ke Web Speech API", err);
               fallbackAudio(clearText);
             });
           }
@@ -664,33 +669,29 @@
 
       const fallbackAudio = (text) => {
         if ('speechSynthesis' in window) {
-          window.speechSynthesis.resume(); // Fix iOS Bug: Mesin suara tersangkut
           window.speechSynthesis.cancel();
           
-          // Fix iOS Bug: Harus ada jeda sedikit setelah cancel agar tidak bisu
-          setTimeout(() => {
-            const utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = 'ar-SA'; 
-            utterance.rate = 0.85; 
+          const utterance = new SpeechSynthesisUtterance(text);
+          utterance.lang = 'ar-SA'; 
+          utterance.rate = 0.85; 
 
-            const arabicVoices = availableVoices.filter(v => v.lang.startsWith('ar'));
-            
-            let femaleVoice = arabicVoices.find(v => 
-              v.name.toLowerCase().includes('female') || 
-              v.name.toLowerCase().includes('laila') || 
-              v.name.toLowerCase().includes('zeina') || 
-              v.name.toLowerCase().includes('hoda') ||
-              v.name.toLowerCase().includes('salma')
-            );
+          const arabicVoices = availableVoices.filter(v => v.lang.startsWith('ar'));
+          
+          let targetVoice = arabicVoices.find(v => 
+            v.name.toLowerCase().includes('female') || 
+            v.name.toLowerCase().includes('laila') || 
+            v.name.toLowerCase().includes('maged') || 
+            v.name.toLowerCase().includes('tarik') || 
+            v.name.toLowerCase().includes('zeina')
+          );
 
-            if (femaleVoice) {
-              utterance.voice = femaleVoice;
-            } else if (arabicVoices.length > 0) {
-              utterance.voice = arabicVoices[0];
-            }
+          if (targetVoice) {
+            utterance.voice = targetVoice;
+          } else if (arabicVoices.length > 0) {
+            utterance.voice = arabicVoices[0];
+          }
 
-            window.speechSynthesis.speak(utterance);
-          }, 50); 
+          window.speechSynthesis.speak(utterance);
         }
       };
 
@@ -758,16 +759,15 @@
           setLoginError("Token akses salah. Silakan hubungi Admin.");
           return;
         }
-        
-        // Pemanasan Mesin Audio di background (Wajib untuk iOS)
+
         try {
-          const silentAudio = new Audio('data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA');
-          silentAudio.play().catch(() => {});
           if ('speechSynthesis' in window) {
-              window.speechSynthesis.resume();
+              const warmup = new SpeechSynthesisUtterance('');
+              warmup.volume = 0;
+              window.speechSynthesis.speak(warmup);
           }
         } catch (err) {}
-
+        
         localStorage.setItem('alfal_session_name', participantName);
         setIsLoggedIn(true);
         setLoginError("");
@@ -808,14 +808,14 @@
         };
         
         try {
-          const res = await fetch(GOOGLE_SCRIPT_URL, {
+          await fetch(GOOGLE_SCRIPT_URL, {
             method: 'POST',
             body: JSON.stringify(payload),
+            mode: 'no-cors', // Penting untuk Safari agar tidak diblokir saat mengirim data
             headers: {
               'Content-Type': 'text/plain;charset=utf-8',
             }
           });
-          if (!res.ok) throw new Error("Gagal network");
         } catch (err) {
           console.error("Gagal mengirim ke Google Sheet:", err);
           throw err;
@@ -1027,10 +1027,10 @@
       return (
         <div className="min-h-screen bg-[#F8FAFC] flex text-slate-800 font-sans relative">
           
-          {/* Notifikasi Peringatan Khusus Pengguna iPhone */}
+          {/* Notifikasi Peringatan Khusus Pengguna iPhone/Safari */}
           {showIosHint && (
-            <div className="fixed top-4 left-1/2 transform -translate-x-1/2 bg-blue-600 text-white px-6 py-3 rounded-full shadow-2xl z-[100] font-bold text-xs md:text-sm text-center w-[90%] max-w-sm border-2 border-blue-400 animate-in slide-in-from-top-4">
-              📱 Pengguna iPhone: Pastikan <b>Tombol Mute/Hening</b> di samping HP Anda <b>dimatikan</b> agar suara terdengar!
+            <div className="fixed top-4 left-1/2 transform -translate-x-1/2 bg-blue-600 text-white px-6 py-4 rounded-2xl shadow-2xl z-[100] font-bold text-xs md:text-sm text-center w-[90%] max-w-sm border-2 border-blue-400 transition-all">
+              📱 Pengguna Safari/iPhone:<br/>Pastikan <b>Tombol Mute/Hening</b> di samping HP Anda <b>dimatikan</b> agar suara mufrodat terdengar!
             </div>
           )}
 
@@ -1146,7 +1146,7 @@
                           {MUFRODAT_DB[day].title}
                         </h2>
                         <button 
-                          onClick={() => { setSelectedDay(parseInt(day)); setActiveTab('materi'); }}
+                          onClick={() => { setSelectedDay(parseInt(day)); setActiveTab('materi'); window.scrollTo(0,0); }}
                           className={`w-full py-2.5 md:py-3 rounded-xl font-black text-[10px] shadow-lg md:shadow-xl transition-all active:scale-95 ${selectedDay == day ? 'bg-white text-emerald-700 hover:bg-emerald-50' : 'bg-emerald-600 text-white hover:bg-emerald-700'}`}
                         >
                           Pilih Misi {day}

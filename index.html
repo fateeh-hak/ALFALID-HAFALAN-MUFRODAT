@@ -425,7 +425,7 @@
         title: "Bagian Rumah", titleAr: "أَجْزَاءُ البَيْتِ", data: [
           { id: 1, arab: "جِدَارٌ", latin: "Jidaarun", arti: "Dinding", contoh: "الْجِدَارُ لَوْنُهُ أَبْيَضُ", deskripsi: "Tembok penyekat ruangan di dalam rumah." },
           { id: 2, arab: "سَقْفٌ", latin: "Saqfun", arti: "Atap", contoh: "السَّقْفُ عَالٍ جِدًّا", deskripsi: "Bagian penutup atas suatu bangunan." },
-          { id: 3, arab: "بِلَاطٌ", latin: "Bilaatun", arti: "Lantai", contoh: "أُنَظِّفُ الْبِلَأطَ كُلَّ يَوْمٍ", deskripsi: "Bagian dasar ruangan tempat kita berpijak." },
+          { id: 3, arab: "أَرْضِيَّةٌ", latin: "Ardhiyyatun", arti: "Lantai", contoh: "أُنَظِّفُ الْأَرْضِيَّةَ كُلَّ يَوْمٍ", deskripsi: "Bagian dasar ruangan tempat kita berpijak." },
           { id: 4, arab: "سُلَّمٌ", latin: "Sullamun", arti: "Tangga", contoh: "أَصْعَدُ السُّلَّمَ إِلَى الْغُرْفَةِ", deskripsi: "Pijakan bertingkat untuk naik atau turun." },
           { id: 5, arab: "سُوْرٌ", latin: "Suurun", arti: "Pagar", contoh: "حَوْلَ الْبَيْتِ سُوْرٌ مُرْتَفِعٌ", deskripsi: "Bangunan pembatas yang mengelilingi rumah." },
           { id: 6, arab: "بَاحَةٌ", latin: "Baahatun", arti: "Halaman", contoh: "أَلْعَبُ فِي بَاحَةِ الْبَيْتِ", deskripsi: "Ruang terbuka di depan atau belakang rumah." },
@@ -530,6 +530,14 @@
       const [availableVoices, setAvailableVoices] = useState([]);
       const [isProcessing, setIsProcessing] = useState(false);
 
+      // --- NEW: Voice Quiz States (Pemanasan Setor Hafalan) ---
+      const [rekamStep, setRekamStep] = useState(0); // 0: Kuis Suara (Pemanasan), 1: Rekam Setoran Asli
+      const [voiceQuizList, setVoiceQuizList] = useState([]);
+      const [currentVoiceQuestion, setCurrentVoiceQuestion] = useState(0);
+      const [isListeningQuiz, setIsListeningQuiz] = useState(false);
+      const [recognizedText, setRecognizedText] = useState("");
+      const [voiceQuizFeedback, setVoiceQuizFeedback] = useState(null);
+
       // Audio Recording States
       const [isRecording, setIsRecording] = useState(false);
       const [audioUrl, setAudioUrl] = useState(null);
@@ -549,6 +557,90 @@
           window.speechSynthesis.onvoiceschanged = fetchVoices;
         }
       }, []);
+
+      // Menyiapkan 5 soal pemanasan setiap kali buka tab Rekam
+      useEffect(() => {
+        if (activeTab === 'rekam') {
+          setRekamStep(0);
+          setCurrentVoiceQuestion(0);
+          setRecognizedText("");
+          setVoiceQuizFeedback(null);
+          deleteRecording();
+          
+          const allData = MUFRODAT_DB[selectedDay].data;
+          const shuffled = [...allData].sort(() => 0.5 - Math.random());
+          setVoiceQuizList(shuffled.slice(0, 5));
+        }
+      }, [activeTab, selectedDay]);
+
+      // FUNGSI STT (Speech-to-Text) untuk Kuis Suara
+      const startListeningVoiceQuiz = () => {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+          alert("Maaf, browser Anda tidak mendukung fitur pengenalan suara otomatis. Anda akan langsung dialihkan ke bagian Setor Hafalan Utama.");
+          setRekamStep(1);
+          return;
+        }
+
+        setIsListeningQuiz(true);
+        setRecognizedText("");
+        setVoiceQuizFeedback(null);
+
+        const recognition = new SpeechRecognition();
+        recognition.lang = 'ar-SA';
+        recognition.interimResults = false;
+        recognition.maxAlternatives = 1;
+
+        recognition.onresult = (event) => {
+          const transcript = event.results[0][0].transcript;
+          setRecognizedText(transcript);
+
+          const targetWord = voiceQuizList[currentVoiceQuestion].arab;
+
+          // Normalisasi: Menghapus harakat, spasi, dan menyamakan Alif/Ta-marbutah agar anak mudah benar
+          const normalize = (text) => {
+            if (!text) return "";
+            return text.replace(/[\u064B-\u065F]/g, '')
+                       .replace(/[أإآ]/g, 'ا')
+                       .replace(/ة/g, 'ه')
+                       .replace(/ى/g, 'ي')
+                       .replace(/\s+/g, '');
+          };
+
+          const normTarget = normalize(targetWord);
+          const normInput = normalize(transcript);
+
+          if (normInput.includes(normTarget) || normTarget.includes(normInput)) {
+            setVoiceQuizFeedback('correct');
+            setTimeout(() => {
+              if (currentVoiceQuestion < 4) {
+                setCurrentVoiceQuestion(q => q + 1);
+                setRecognizedText("");
+                setVoiceQuizFeedback(null);
+              } else {
+                setRekamStep(1); // Pemanasan selesai, masuk ke setor hafalan asli
+              }
+            }, 1500);
+          } else {
+            setVoiceQuizFeedback('wrong');
+          }
+        };
+
+        recognition.onerror = (event) => {
+          console.error("Speech Recognition Error:", event.error);
+          if(event.error === 'not-allowed') {
+             alert("Akses mikrofon ditolak! Izinkan mikrofon di pengaturan browser untuk bermain latihan suara.");
+          }
+          setVoiceQuizFeedback('error');
+          setIsListeningQuiz(false);
+        };
+
+        recognition.onend = () => {
+          setIsListeningQuiz(false);
+        };
+
+        recognition.start();
+      };
 
       const startRecording = async () => {
         try {
@@ -628,10 +720,6 @@
         audioChunksRef.current = [];
       };
 
-      useEffect(() => {
-        deleteRecording();
-      }, [selectedDay]);
-
       const playAudio = (text) => {
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
         const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
@@ -642,8 +730,6 @@
             setTimeout(() => setShowIosHint(false), 7000);
         }
 
-        // PENGECUALIAN SAFARI & iOS: 
-        // Wajib dieksekusi secara instan dari onClick, dilarang pakai Promise/Fetch.
         if (isIOS || isSafari) {
            fallbackAudio(text + " .");
            return;
@@ -811,7 +897,7 @@
           await fetch(GOOGLE_SCRIPT_URL, {
             method: 'POST',
             body: JSON.stringify(payload),
-            mode: 'no-cors', // Penting untuk Safari agar tidak diblokir saat mengirim data
+            mode: 'no-cors', 
             headers: {
               'Content-Type': 'text/plain;charset=utf-8',
             }
@@ -1257,59 +1343,121 @@
 
             {/* Tab Rekam Hafalan */}
             {activeTab === 'rekam' && (
-              <div className="max-w-2xl mx-auto animate-in fade-in duration-500">
-                <div className="bg-white p-8 md:p-12 rounded-[2.5rem] md:rounded-[3.5rem] border border-slate-100 shadow-xl md:shadow-2xl text-center">
-                  <div className="w-20 h-20 md:w-24 md:h-24 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6 md:mb-8 shadow-inner">
-                    <Mic size={40} className="md:w-[48px] md:h-[48px]" />
-                  </div>
-                  <h2 className="text-3xl md:text-4xl font-black mb-6 md:mb-8 tracking-tight">Setor Hafalan Hari {selectedDay}</h2>
-                  <div className="mb-8 md:mb-12 flex flex-col items-center gap-2">
-                    <p className="text-slate-400 text-xs font-black uppercase tracking-widest mb-2">Tema</p>
-                    <h3 className="font-arabic font-bold text-3xl md:text-4xl text-emerald-700" dir="rtl">{MUFRODAT_DB[selectedDay].titleAr}</h3>
-                    <p className="text-slate-600 font-bold text-lg md:text-xl">{MUFRODAT_DB[selectedDay].title}</p>
-                    <p className="text-slate-500 mt-6 text-sm md:text-base px-2 md:px-6">Sudah hafal Mufrodatnya? Tekan tombol rekam di bawah ini dan bacakan semua hafalanmu dengan suara keras dan jelas!</p>
-                  </div>
+              <div className="max-w-2xl mx-auto pb-10">
+                
+                {/* Step 0: Pemanasan Suara (Speech Recognition Quiz) */}
+                {rekamStep === 0 && voiceQuizList.length > 0 && (
+                  <div className="bg-white p-8 md:p-12 rounded-[2.5rem] md:rounded-[3.5rem] border border-slate-100 shadow-xl md:shadow-2xl text-center relative overflow-hidden animate-in fade-in duration-500">
+                    
+                    <div className="absolute top-0 left-0 w-full h-1.5 bg-slate-100">
+                       <div className="h-full bg-blue-500 transition-all duration-500 ease-out" style={{ width: `${((currentVoiceQuestion) / 5) * 100}%` }}></div>
+                    </div>
 
-                  {!audioUrl ? (
-                    <div className="flex flex-col items-center justify-center gap-6">
+                    <div className="flex justify-between items-center mb-6 mt-2 text-slate-400 font-black text-[10px] md:text-xs uppercase tracking-widest">
+                       <span>Pemanasan {currentVoiceQuestion + 1} / 5</span>
+                       <span className="text-blue-600 bg-blue-50 px-3 py-1 rounded-lg">Ucapkan Arabnya</span>
+                    </div>
+                    
+                    <h2 className="text-2xl md:text-3xl font-black text-slate-800 mb-2">Latihan Pengucapan</h2>
+                    <p className="text-slate-500 text-sm md:text-base font-medium mb-8 max-w-md mx-auto">
+                      Ketuk mikrofon di bawah dan ucapkan bahasa Arab dari kata berikut:
+                    </p>
+                    
+                    <h3 className="text-3xl md:text-4xl font-black text-blue-600 mb-10 tracking-tight">
+                      "{voiceQuizList[currentVoiceQuestion].arti}"
+                    </h3>
+
+                    <div className="flex flex-col items-center justify-center gap-6 mb-10">
                       <button
-                        onClick={isRecording ? stopRecording : startRecording}
-                        className={`w-24 h-24 md:w-28 md:h-28 rounded-[2rem] flex items-center justify-center text-white shadow-xl transition-all ${isRecording ? 'bg-red-500 animate-pulse scale-110 shadow-red-200' : 'bg-emerald-600 hover:bg-emerald-700 hover:scale-105 shadow-emerald-200'}`}
+                        onClick={startListeningVoiceQuiz}
+                        disabled={isListeningQuiz}
+                        className={`w-20 h-20 md:w-24 md:h-24 rounded-full flex items-center justify-center text-white transition-all shadow-xl
+                          ${isListeningQuiz 
+                            ? 'bg-red-500 animate-pulse ring-8 ring-red-500/30 scale-105' 
+                            : 'bg-gradient-to-br from-blue-500 to-blue-700 hover:scale-105 shadow-blue-200'}`}
                       >
-                        {isRecording ? <Square size={32} className="md:w-10 md:h-10" /> : <Mic size={40} className="md:w-12 md:h-12" />}
+                        {isListeningQuiz ? <Square size={32} /> : <Mic size={40} />}
                       </button>
-                      <p className="text-sm md:text-base font-bold text-slate-400">
-                        {isRecording ? "Sedang merekam... Tekan kotak untuk berhenti." : "Tekan ikon Mikrofon untuk mulai merekam"}
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center justify-center gap-6 w-full animate-in zoom-in-95">
-                      <div className="bg-slate-50 p-4 rounded-2xl w-full max-w-md border border-slate-200 shadow-sm">
-                         <audio src={audioUrl} controls className="w-full h-12" />
-                      </div>
                       
-                      {!isAudioSent ? (
-                        <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md">
-                           <button onClick={deleteRecording} disabled={isProcessing} className="flex-1 py-3 md:py-4 bg-white border border-slate-200 text-slate-600 rounded-xl md:rounded-2xl font-black hover:bg-red-50 hover:text-red-500 hover:border-red-200 transition-colors flex justify-center items-center gap-2 disabled:opacity-50">
-                             <Trash2 size={18} /> Ulangi
-                           </button>
-                           <button onClick={submitHafalan} disabled={isProcessing} className="flex-[2] py-3 md:py-4 bg-emerald-600 text-white rounded-xl md:rounded-2xl font-black shadow-lg hover:bg-emerald-700 transition-colors flex justify-center items-center gap-2 disabled:opacity-50">
-                             {isProcessing ? "Mengirim..." : "Kirim Rekaman"} <ArrowRight size={18}/>
-                           </button>
-                        </div>
-                      ) : (
-                        <div className="flex flex-col gap-4 w-full max-w-md fade-in-up">
-                           <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-4 rounded-xl font-bold flex justify-center items-center gap-2 shadow-sm">
-                              <CheckCircle size={24} /> Rekaman Berhasil Dikirim!
+                      <div className="h-20 flex flex-col items-center justify-center">
+                        {isListeningQuiz && <p className="text-sm font-bold text-red-500 animate-pulse">Mendengarkan suaramu...</p>}
+                        {!isListeningQuiz && !recognizedText && <p className="text-sm font-bold text-slate-400">Ketuk untuk bicara</p>}
+                        
+                        {recognizedText && (
+                           <div className="animate-in fade-in zoom-in duration-300">
+                             <p className="text-2xl md:text-3xl font-arabic font-bold text-slate-800" dir="rtl">{recognizedText}</p>
+                             {voiceQuizFeedback === 'correct' && <p className="text-emerald-500 font-bold text-sm md:text-base mt-2">⭐ Mumtaz! Pengucapan tepat.</p>}
+                             {voiceQuizFeedback === 'wrong' && <p className="text-red-500 font-bold text-sm md:text-base mt-2">Kurang tepat, ayo coba lagi!</p>}
+                             {voiceQuizFeedback === 'error' && <p className="text-orange-500 font-bold text-sm md:text-base mt-2">Suara tidak terdengar jelas.</p>}
                            </div>
-                           <button onClick={() => { setActiveTab('quiz'); setQuizStep(0); setCurrentQuestion(0); setScore(0); window.scrollTo(0,0); }} className="w-full py-4 bg-slate-900 text-white rounded-xl font-bold shadow-lg hover:bg-emerald-600 transition-colors flex justify-center items-center gap-2 mt-2">
-                             Lanjut ke Kuis <ArrowRight size={18}/>
-                           </button>
-                        </div>
-                      )}
+                        )}
+                      </div>
                     </div>
-                  )}
-                </div>
+
+                    <button 
+                      onClick={() => setRekamStep(1)} 
+                      className="text-slate-400 text-xs md:text-sm font-bold underline hover:text-slate-600 transition-colors"
+                    >
+                      Lewati Pemanasan & Langsung Setor Hafalan
+                    </button>
+                  </div>
+                )}
+
+                {/* Step 1: Setor Hafalan Utama */}
+                {rekamStep === 1 && (
+                  <div className="bg-white p-8 md:p-12 rounded-[2.5rem] md:rounded-[3.5rem] border border-slate-100 shadow-xl md:shadow-2xl text-center animate-in fade-in duration-500">
+                    <div className="w-20 h-20 md:w-24 md:h-24 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6 md:mb-8 shadow-inner ring-8 ring-emerald-50">
+                      <Mic size={40} className="md:w-[48px] md:h-[48px]" />
+                    </div>
+                    <h2 className="text-3xl md:text-4xl font-black mb-6 md:mb-8 tracking-tight">Setor Hafalan Hari {selectedDay}</h2>
+                    <div className="mb-8 md:mb-12 flex flex-col items-center gap-2">
+                      <p className="text-slate-400 text-xs font-black uppercase tracking-widest mb-2">Tema</p>
+                      <h3 className="font-arabic font-bold text-3xl md:text-4xl text-emerald-700" dir="rtl">{MUFRODAT_DB[selectedDay].titleAr}</h3>
+                      <p className="text-slate-600 font-bold text-lg md:text-xl">{MUFRODAT_DB[selectedDay].title}</p>
+                      <p className="text-slate-500 mt-6 text-sm md:text-base px-2 md:px-6">Tekan tombol rekam di bawah ini dan bacakan 10 hafalan mufrodat bahasa Arab beserta artinya dengan lantang!</p>
+                    </div>
+
+                    {!audioUrl ? (
+                      <div className="flex flex-col items-center justify-center gap-6">
+                        <button
+                          onClick={isRecording ? stopRecording : startRecording}
+                          className={`w-24 h-24 md:w-28 md:h-28 rounded-[2rem] flex items-center justify-center text-white shadow-xl transition-all ${isRecording ? 'bg-red-500 animate-pulse scale-110 shadow-red-200' : 'bg-emerald-600 hover:bg-emerald-700 hover:scale-105 shadow-emerald-200'}`}
+                        >
+                          {isRecording ? <Square size={32} className="md:w-10 md:h-10" /> : <Mic size={40} className="md:w-12 md:h-12" />}
+                        </button>
+                        <p className="text-sm md:text-base font-bold text-slate-400">
+                          {isRecording ? "Sedang merekam... Tekan kotak untuk berhenti." : "Tekan ikon Mikrofon untuk mulai merekam"}
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center gap-6 w-full animate-in zoom-in-95">
+                        <div className="bg-slate-50 p-4 rounded-2xl w-full max-w-md border border-slate-200 shadow-sm">
+                           <audio src={audioUrl} controls className="w-full h-12" />
+                        </div>
+                        
+                        {!isAudioSent ? (
+                          <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md">
+                             <button onClick={deleteRecording} disabled={isProcessing} className="flex-1 py-3 md:py-4 bg-white border border-slate-200 text-slate-600 rounded-xl md:rounded-2xl font-black hover:bg-red-50 hover:text-red-500 hover:border-red-200 transition-colors flex justify-center items-center gap-2 disabled:opacity-50">
+                               <Trash2 size={18} /> Ulangi
+                             </button>
+                             <button onClick={submitHafalan} disabled={isProcessing} className="flex-[2] py-3 md:py-4 bg-emerald-600 text-white rounded-xl md:rounded-2xl font-black shadow-lg hover:bg-emerald-700 transition-colors flex justify-center items-center gap-2 disabled:opacity-50">
+                               {isProcessing ? "Mengirim..." : "Kirim Rekaman"} <ArrowRight size={18}/>
+                             </button>
+                          </div>
+                        ) : (
+                          <div className="flex flex-col gap-4 w-full max-w-md fade-in-up">
+                             <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-4 rounded-xl font-bold flex justify-center items-center gap-2 shadow-sm">
+                                <CheckCircle size={24} /> Rekaman Berhasil Dikirim!
+                             </div>
+                             <button onClick={() => { setActiveTab('quiz'); setQuizStep(0); setCurrentQuestion(0); setScore(0); window.scrollTo(0,0); }} className="w-full py-4 bg-slate-900 text-white rounded-xl font-bold shadow-lg hover:bg-emerald-600 transition-colors flex justify-center items-center gap-2 mt-2">
+                               Lanjut ke Kuis <ArrowRight size={18}/>
+                             </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             )}
 
@@ -1357,9 +1505,7 @@
                        // Pilihan Ganda
                        <div className="text-center animate-in fade-in duration-300" key={`mc-${currentQuestion}`}>
                          <p className="text-xs md:text-sm font-black text-slate-400 uppercase mb-3 md:mb-4 tracking-widest">Apa arti kata ini?</p>
-                         <h1 className="text-5xl md:text-6xl font-arabic text-emerald-900 mb-8 md:mb-12 drop-shadow-sm leading-normal">
-                           {currentMufrodatList[currentQuestion].arab}
-                         </h1>
+                         <h1 className="text-5xl md:text-6xl font-arabic font-bold text-slate-800 mb-10 pb-2">{currentMufrodatList[currentQuestion].arab}</h1>
                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
                            {[
                              currentMufrodatList[currentQuestion].arti, 

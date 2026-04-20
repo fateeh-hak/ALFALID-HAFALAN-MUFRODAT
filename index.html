@@ -2,8 +2,20 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Mencegah zoom otomatis di HP saat mengetik (Penting untuk UI mirip aplikasi asli) -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  
+  <!-- PWA & Mobile App Meta Tags -->
+  <meta name="theme-color" content="#059669">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Alfal">
+  
   <title>Alfal.id | Belajar Bahasa Arab</title>
+  
+  <!-- Web App Manifest (Untuk Add to Home Screen) -->
+  <link rel="manifest" href='data:application/manifest+json,{"name":"Alfal.id Belajar Arab","short_name":"Alfal","start_url":".","display":"standalone","background_color":"#F8FAFC","theme_color":"#059669","icons":[{"src":"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iIzA1OTY2OSIvPjx0ZXh0IHg9IjUwIiB5PSI2NSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjUwIiBmaWxsPSJ3aGl0ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+QTwvdGV4dD48L3N2Zz4=","sizes":"192x192","type":"image/svg+xml"}]}'>
   
   <!-- Tailwind CSS via CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -18,19 +30,36 @@
     body { 
       font-family: 'Plus Jakarta Sans', sans-serif; 
       background: #F8FAFC; 
+      /* Mencegah highlight biru saat tap di Android */
+      -webkit-tap-highlight-color: transparent;
+      /* Mencegah text selection tidak sengaja */
+      -webkit-user-select: none;
+      user-select: none;
+    }
+    input, textarea {
+      /* Mengizinkan seleksi teks pada input */
+      -webkit-user-select: auto;
+      user-select: auto;
     }
     .font-arabic { 
       font-family: 'Amiri', serif; 
     }
     ::-webkit-scrollbar { 
-      width: 8px; 
+      width: 6px; 
     }
     ::-webkit-scrollbar-thumb { 
-      background: #e2e8f0; 
+      background: #cbd5e1; 
       border-radius: 10px; 
     }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    /* Safe Area untuk HP dengan notch (iPhone X ke atas) */
     .pb-safe {
-      padding-bottom: env(safe-area-inset-bottom);
+      padding-bottom: env(safe-area-inset-bottom, 16px);
+    }
+    .pt-safe {
+      padding-top: env(safe-area-inset-top, 0px);
     }
   </style>
 
@@ -51,7 +80,7 @@
     }
   </script>
 </head>
-<body>
+<body class="overscroll-none">
   
   <!-- Container Utama React -->
   <div id="root"></div>
@@ -100,7 +129,7 @@
         ]
       },
       2: {
-        title: "Peralatan Sekolah", titleAr: "الأَدَوَاتُ المَدْرَسِيَّةُ", data: [
+        title: "Peralatan Sekolah", titleAr: "الأَدَوَاتُ المَدْرَسِيَّةُ", data: [
           { id: 1, arab: "قَلَمٌ", latin: "Qalamun", arti: "Pena", contoh: "أَكْتُبُ بِالْقَلَمِ", deskripsi: "Alat tulis utama untuk belajar." },
           { id: 2, arab: "كِتَابٌ", latin: "Kitabun", arti: "Buku", contoh: "أَقْرَأُ الْكِتَابَ فِي الْمَكْتَبَةِ", deskripsi: "Sumber ilmu pengetahuan." },
           { id: 3, arab: "دَفْتَرٌ", latin: "Daftarun", arti: "Buku Tulis", contoh: "أَكْتُبُ الدَّرْسَ فِي الدَّفْتر", deskripsi: "Tempat mencatat penjelasan ustadz." },
@@ -212,7 +241,7 @@
         ]
       },
       10: {
-        title: "Kata Sifat", titleAr: "الصِّفَاتُ", data: [
+        title: "Kata Sifat", titleAr: "الصِّفَاتُ", data: [
           { id: 1, arab: "كَبِيْرٌ", latin: "Kabiirun", arti: "Besar", contoh: "هَذَا بَيْتٌ كَبِيْرٌ", deskripsi: "Ukuran yang luas atau agung." },
           { id: 2, arab: "صَغِيْرٌ", latin: "Shaghiirun", arti: "Kecil", contoh: "هَذَا قَلَمٌ صَغِيْرٌ", deskripsi: "Ukuran yang mini atau tidak besar." },
           { id: 3, arab: "طَوِيْلٌ", latin: "Thawiilun", arti: "Panjang/Tinggi", contoh: "الرَّجُلُ طَوِيْلٌ جِدًّا", deskripsi: "Ukuran dimensi memanjang atau tinggi." },
@@ -240,7 +269,7 @@
         ]
       },
       12: {
-        title: "Aktivitas Harian", titleAr: "الأَفْعَالُ اليَوْمِيَّةُ", data: [
+        title: "Aktivitas Harian", titleAr: "الأَفْعَالُ اليَوْمِيَّةُ", data: [
           { id: 1, arab: "قَرَأَ", latin: "Qara-a", arti: "Membaca", contoh: "أَنَا أَقْرَأُ الْقُرْآنَ", deskripsi: "Kegiatan melihat dan memahami isi tulisan." },
           { id: 2, arab: "كَتَبَ", latin: "Kataba", arti: "Menulis", contoh: "أَكْتُبُ الدَّرْسَ فِي الدَّفْتَرِ", deskripsi: "Kegiatan membuat huruf dengan pena." },
           { id: 3, arab: "أَكَلَ", latin: "Akala", arti: "Makan", contoh: "أَكَلْتُ الأَرُزَّ فِي الصَّبَاحِ", deskripsi: "Kegiatan memasukkan makanan ke mulut." },
@@ -282,7 +311,7 @@
         ]
       },
       15: {
-        title: "Alam & Cuaca", titleAr: "الطَّبِيعَةُ وَالمَنَاخُ", data: [
+        title: "Alam & Cuaca", titleAr: "الطَّبِيعَةُ وَالمَنَاخُ", data: [
           { id: 1, arab: "شَمْسٌ", latin: "Syamsun", arti: "Matahari", contoh: "الشَّمْسُ تُشْرِقُ صَبَاحًا", deskripsi: "Bintang pusat tata surya." },
           { id: 2, arab: "قَمَرٌ", latin: "Qamarun", arti: "Bulan", contoh: "الْقَمَرُ يَنْظُرُ فِي اللَّيْلِ", deskripsi: "Satelit alami bumi." },
           { id: 3, arab: "نَجْمٌ", latin: "Najmun", arti: "Bintang", contoh: "النُّجُوْمُ كَثِيْرَةٌ فِي السَّمَاءِ", deskripsi: "Benda langit yang bercahaya." },
@@ -315,7 +344,7 @@
           { id: 2, arab: "مَسَاءٌ", latin: "Masaa-un", arti: "Sore", contoh: "أَلْعَبُ مَعَ أَصْدِقَائِي مَسَاءً", deskripsi: "Waktu menjelang matahari terbenam." },
           { id: 3, arab: "لَيْلٌ", latin: "Lailun", arti: "Malam", contoh: "أَنَا أَنَامُ فِي اللَّيْلِ", deskripsi: "Waktu gelap setelah matahari terbenam." },
           { id: 4, arab: "نَهَارٌ", latin: "Nahaarun", arti: "Siang", contoh: "الشَّمْسُ قَوِيَّةٌ فِي النَّهَارِ", deskripsi: "Waktu terang dari pagi hingga sore." },
-          { id: 5, arab: "سَاعَةٌ", latin: "Saa'atun", arti: "Jam", contoh: "الآنَ السَّاعَةُ السَّابِعَةُ", deskripsi: "Satuan waktu yang terdiri من 60 menit." },
+          { id: 5, arab: "سَاعَةٌ", latin: "Saa'atun", arti: "Jam", contoh: "الآنَ السَّاعَةُ السَّابِعَةُ", deskripsi: "Satuan waktu yang terdiri dari 60 menit." },
           { id: 6, arab: "دَقِيْقَةٌ", latin: "Daqiiqatun", arti: "Menit", contoh: "انْتَظِرْ لِمَدَّةِ دَقِيْقَةٍ", deskripsi: "Satuan waktu yang terdiri dari 60 detik." },
           { id: 7, arab: "ثَانِيَةٌ", latin: "Thaaniyatun", arti: "Detik", contoh: "مَرَّتْ ثَانِيَةٌ سَرِيْعَةٌ", deskripsi: "Satuan waktu terkecil dalam jam." },
           { id: 8, arab: "أُسْبُوْعٌ", latin: "Usbuu'un", arti: "Minggu", contoh: "فِي الأُسْبُوْعِ سَبْعَةُ أَيَّامٍ", deskripsi: "Kumpulan waktu selama tujuh hari." },
@@ -324,7 +353,7 @@
         ]
       },
       18: {
-        title: "Peralatan Kamar Mandi", titleAr: "أَدَوَاتُ الحَمَّامِ", data: [
+        title: "Peralatan Kamar Mandi", titleAr: "أَدَوَاتُ الحَمَّامِ", data: [
           { id: 1, arab: "صَابُوْنٌ", latin: "Shaabuun", arti: "Sabun", contoh: "أَسْتَعْمِلُ الصَّابُوْنَ لِلْغُسْلِ", deskripsi: "Alat pembersih tubuh saat mandi." },
           { id: 2, arab: "مِنْشَفَةٌ", latin: "Minsyafah", arti: "Handuk", contoh: "هَذِهِ مِنْشَفَةٌ نَاشِفَةٌ", deskripsi: "Kain untuk mengeringkan badan." },
           { id: 3, arab: "فُرْشَاةُ الأَسْنَانِ", latin: "Fursyatul Asnan", arti: "Sikat Gigi", contoh: "أُنَظِّفُ أَسْنَانِي بِالْفُرْشَاةِ", deskripsi: "Alat untuk membersihkan gigi." },
@@ -366,7 +395,7 @@
         ]
       },
       21: {
-        title: "Kata Ganti", titleAr: "الضَّمَائِرُ", data: [
+        title: "Kata Ganti", titleAr: "الضَّمَائِرُ", data: [
           { id: 1, arab: "أَنَا", latin: "Ana", arti: "Saya", contoh: "أَنَا طَالِبٌ", deskripsi: "Kata ganti orang pertama tunggal." },
           { id: 2, arab: "نَحْنُ", latin: "Nahnu", arti: "Kami/Kita", contoh: "نَحْنُ مُسْلِمُوْنَ", deskripsi: "Kata ganti orang pertama jamak." },
           { id: 3, arab: "أَنْتَ", latin: "Anta", arti: "Kamu (L)", contoh: "أَنْتَ طَبِيْبٌ", deskripsi: "Kata ganti orang kedua laki-laki tunggal." },
@@ -432,7 +461,7 @@
           { id: 7, arab: "مَطْبَخٌ", latin: "Mathbakhun", arti: "Dapur", contoh: "أُمِّي فِي الْمَطْبَخِ الآنَ", deskripsi: "Ruangan khusus untuk memasak makanan." },
           { id: 8, arab: "حَمَّامٌ", latin: "Hammaamun", arti: "Kamar Mandi", contoh: "أَغْتَسِلُ فِي الْحَمَّامِ", deskripsi: "Ruangan untuk membersihkan diri." },
           { id: 9, arab: "غُرْفَةُ النَّوْمِ", latin: "Ghurfatun Naumi", arti: "Kamar Tidur", contoh: "أَنَامُ فِي غُرْفَةِ النَّوْمِ", deskripsi: "Ruangan tertutup untuk istirahat dan tidur." },
-          { id: 10, arab: "غُرْفَةُ الجُلُوْسِ", latin: "Ghurfatul Juluusi", arti: "Ruang Tamu", contoh: "نَسْتَقْبِلُ الضَّيْفَ فِي غُرْفَةِ الْجُلُوْسِ", deskripsi: "Ruangan depan untuk menyambut tamu." },
+          { id: 10, arab: "غُرْفَةُ الجُلُوْسِ", টুক: "Ruang Tamu", contoh: "نَسْتَقْبِلُ الضَّيْفَ فِي غُرْفَةِ الْجُلُوْسِ", deskripsi: "Ruangan depan untuk menyambut tamu." },
         ]
       },
       26: {
@@ -523,6 +552,7 @@
       const [currentQuestion, setCurrentQuestion] = useState(0);
       const [score, setScore] = useState(0);
       const [myScores, setMyScores] = useState([]);
+      const [quizQuestions, setQuizQuestions] = useState([]);
 
       // Scramble Game States
       const [scrambledLetters, setScrambledLetters] = useState([]);
@@ -530,8 +560,8 @@
       const [availableVoices, setAvailableVoices] = useState([]);
       const [isProcessing, setIsProcessing] = useState(false);
 
-      // --- NEW: Voice Quiz States (Pemanasan Setor Hafalan) ---
-      const [rekamStep, setRekamStep] = useState(0); // 0: Kuis Suara (Pemanasan), 1: Rekam Setoran Asli
+      // Voice Quiz States (Pemanasan Setor Hafalan)
+      const [rekamStep, setRekamStep] = useState(0); 
       const [voiceQuizList, setVoiceQuizList] = useState([]);
       const [currentVoiceQuestion, setCurrentVoiceQuestion] = useState(0);
       const [isListeningQuiz, setIsListeningQuiz] = useState(false);
@@ -577,7 +607,7 @@
       const startListeningVoiceQuiz = () => {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!SpeechRecognition) {
-          alert("Maaf, browser Anda tidak mendukung fitur pengenalan suara otomatis. Anda akan langsung dialihkan ke bagian Setor Hafalan Utama.");
+          alert("Browser Anda belum mendukung pengenalan suara otomatis. Anda akan langsung dialihkan ke Setor Hafalan.");
           setRekamStep(1);
           return;
         }
@@ -592,46 +622,35 @@
         recognition.maxAlternatives = 1;
 
         recognition.onresult = (event) => {
-          let transcript = event.results[0][0].transcript;
+          const transcript = event.results[0][0].transcript;
+          setRecognizedText(transcript);
+
           const targetWord = voiceQuizList[currentVoiceQuestion].arab;
 
-          // Normalisasi: Menghapus harakat, spasi, dan menyamakan Alif/Ta-marbutah agar anak mudah benar
           const normalize = (text) => {
             if (!text) return "";
             return text.replace(/[\u064B-\u065F]/g, '')
                        .replace(/[أإآ]/g, 'ا')
-                       .replace(/ة/g, 'ه') // Ini untuk memastikan toleransi perbandingan logika
+                       .replace(/ة/g, 'ه')
                        .replace(/ى/g, 'ي')
                        .replace(/\s+/g, '');
           };
 
           const normTarget = normalize(targetWord);
           const normInput = normalize(transcript);
-          
-          let displayText = transcript;
 
           if (normInput.includes(normTarget) || normTarget.includes(normInput)) {
-            // Jika benar, paksa tampilan agar sesuai persis dengan target tanpa harakat
-            // Hal ini memastikan ta marbuthah (ة) selalu tertulis sempurna di layar, bukan (ه)
-            displayText = targetWord.replace(/[\u064B-\u065F]/g, '');
-            setRecognizedText(displayText);
             setVoiceQuizFeedback('correct');
-            
             setTimeout(() => {
               if (currentVoiceQuestion < 4) {
                 setCurrentVoiceQuestion(q => q + 1);
                 setRecognizedText("");
                 setVoiceQuizFeedback(null);
               } else {
-                setRekamStep(1); // Pemanasan selesai, masuk ke setor hafalan asli
+                setRekamStep(1); 
               }
             }, 1500);
           } else {
-            // Jika salah, coba rapikan visual ta marbuthah di akhir kata jika memang ada
-            if (displayText.endsWith('ه') && targetWord.replace(/[\u064B-\u065F]/g, '').endsWith('ة')) {
-              displayText = displayText.slice(0, -1) + 'ة';
-            }
-            setRecognizedText(displayText);
             setVoiceQuizFeedback('wrong');
           }
         };
@@ -639,7 +658,7 @@
         recognition.onerror = (event) => {
           console.error("Speech Recognition Error:", event.error);
           if(event.error === 'not-allowed') {
-             alert("Akses mikrofon ditolak! Izinkan mikrofon di pengaturan browser untuk bermain latihan suara.");
+             alert("Akses mikrofon ditolak! Izinkan mikrofon di pengaturan browser.");
           }
           setVoiceQuizFeedback('error');
           setIsListeningQuiz(false);
@@ -655,7 +674,7 @@
       const startRecording = async () => {
         try {
           if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-            alert("Maaf, browser Anda tidak mendukung fitur rekam suara. Pastikan membuka web ini melalui Google Chrome/Safari versi terbaru (HTTPS).");
+            alert("Maaf, browser Anda tidak mendukung fitur rekam suara. Gunakan Safari/Chrome terbaru.");
             return;
           }
 
@@ -709,9 +728,9 @@
         } catch (err) {
           console.error("Gagal mengakses mikrofon:", err);
           if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-              alert("Akses mikrofon ditolak!\n\nMohon izinkan akses mikrofon di pengaturan browser Anda (ketuk ikon gembok 🔒 di samping link web untuk mengubah izin).");
+              alert("Akses mikrofon ditolak!\n\nMohon izinkan akses mikrofon di pengaturan browser Anda.");
           } else {
-              alert("Gagal merekam.\n\nPastikan link dibuka di Safari (untuk iPhone) atau Chrome (untuk Android), BUKAN dari browser bawaan WhatsApp.");
+              alert("Gagal merekam.\n\nPastikan link dibuka di Safari/Chrome, BUKAN browser bawaan aplikasi lain.");
           }
         }
       };
@@ -791,6 +810,14 @@
         }
       };
 
+      const unlockAudioContext = () => {
+        if ('speechSynthesis' in window) {
+           const utterance = new SpeechSynthesisUtterance('');
+           utterance.volume = 0;
+           window.speechSynthesis.speak(utterance);
+        }
+      };
+
       useEffect(() => {
         if(!auth) return;
         const initAuth = async () => {
@@ -807,7 +834,7 @@
       }, []);
 
       useEffect(() => {
-        if (!isLoggedIn || !participantName) return;
+        if (!user || !isLoggedIn || !participantName) return;
 
         const localHistoryKey = `alfal_history_${participantName}`;
         const localHistory = JSON.parse(localStorage.getItem(localHistoryKey)) || [];
@@ -824,6 +851,7 @@
             setMyScores(filtered);
           }, (err) => {
              console.error("Firestore Error:", err);
+             localHistory.sort((a, b) => b.timestamp - a.timestamp);
              setMyScores(localHistory); 
           });
           
@@ -835,18 +863,22 @@
       }, [user, isLoggedIn, participantName, db]);
 
       useEffect(() => {
-        if (quizStep === 1 && currentQuestion % 2 !== 0) {
-          const target = currentMufrodatList[currentQuestion].arab;
+        if (quizStep === 1 && currentQuestion % 2 !== 0 && quizQuestions.length > 0) {
+          const target = quizQuestions[currentQuestion].arab;
           const lettersArray = target.match(/\p{L}\p{M}*/gu) || target.split('');
           const letters = lettersArray.map((l, i) => ({ id: i, char: l }));
           const shuffled = [...letters].sort(() => Math.random() - 0.5);
           setScrambledLetters(shuffled);
           setCurrentGuess([]);
         }
-      }, [currentQuestion, quizStep, selectedDay]);
+      }, [currentQuestion, quizStep, selectedDay, quizQuestions]);
 
       const handleLogin = (e) => {
         e.preventDefault();
+        
+        // Membuka kunci audio di browser mobile
+        unlockAudioContext();
+
         if (!participantName.trim()) {
           setLoginError("Nama lengkap tidak boleh kosong.");
           return;
@@ -855,14 +887,6 @@
           setLoginError("Token akses salah. Silakan hubungi Admin.");
           return;
         }
-
-        try {
-          if ('speechSynthesis' in window) {
-              const warmup = new SpeechSynthesisUtterance('');
-              warmup.volume = 0;
-              window.speechSynthesis.speak(warmup);
-          }
-        } catch (err) {}
         
         localStorage.setItem('alfal_session_name', participantName);
         setIsLoggedIn(true);
@@ -880,7 +904,7 @@
       };
 
       const handleResetHistory = () => {
-        if (window.confirm("Apakah kamu yakin ingin menghapus semua riwayat belajar? Data yang sudah dihapus tidak dapat dikembalikan.")) {
+        if (window.confirm("Yakin ingin menghapus semua riwayat belajar? Data yang dihapus tidak dapat dikembalikan.")) {
           const localHistoryKey = `alfal_history_${participantName}`;
           localStorage.removeItem(localHistoryKey);
           setMyScores([]);
@@ -952,7 +976,7 @@
           
           setMyScores(prev => [newRecord, ...prev].sort((a,b) => b.timestamp - a.timestamp));
 
-          if(db) {
+          if(db && user) {
             const scoresCol = collection(db, 'artifacts', appId, 'public', 'data', 'scores');
             await addDoc(scoresCol, {
               name: participantName,
@@ -1017,7 +1041,7 @@
         setIsProcessing(true);
         
         const guessString = currentGuess.map(l => l.char).join('').replace(/\s+/g, '');
-        const targetString = currentMufrodatList[currentQuestion].arab.replace(/\s+/g, '');
+        const targetString = quizQuestions[currentQuestion].arab.replace(/\s+/g, '');
         
         let newScore = score;
         if (guessString === targetString) {
@@ -1037,7 +1061,7 @@
             setActiveTab(id); 
             if (id !== 'home' && quizStep !== 0) setQuizStep(0); 
           }}
-          className={`w-full flex items-center space-x-3 p-4 rounded-2xl transition-all ${
+          className={`w-full flex items-center space-x-3 p-4 rounded-2xl transition-all active:scale-95 touch-manipulation ${
             activeTab === id 
               ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-200' 
               : 'text-slate-500 hover:bg-emerald-50 hover:text-emerald-600'
@@ -1062,7 +1086,7 @@
                 </div>
                 <h1 className="text-2xl md:text-3xl font-black text-slate-900 mb-2 tracking-tight">ALFAL.ID</h1>
                 <p className="text-xs md:text-sm text-slate-400 font-medium leading-relaxed px-2 md:px-4">
-                  Silakan masuk menggunakan Nama & Token Alfal 2026.
+                  Silakan masuk menggunakan Nama & Token Alfal.
                 </p>
               </div>
               
@@ -1076,7 +1100,7 @@
                     <input 
                       type="text" 
                       placeholder="Nama Lengkap Peserta" 
-                      className="w-full pl-11 pr-4 py-3 md:py-4 bg-slate-50 border-2 border-slate-100 rounded-xl md:rounded-2xl outline-none focus:border-emerald-500 focus:bg-white transition-all font-bold text-sm md:text-base" 
+                      className="w-full pl-11 pr-4 py-3 md:py-4 bg-slate-50 border-2 border-slate-100 rounded-xl md:rounded-2xl outline-none focus:border-emerald-500 focus:bg-white transition-all font-bold text-sm md:text-base text-slate-800" 
                       value={participantName} 
                       onChange={(e) => setParticipantName(e.target.value)} 
                       required 
@@ -1093,7 +1117,7 @@
                     <input 
                       type="password" 
                       placeholder="Token Keamanan (123)" 
-                      className="w-full pl-11 pr-4 py-3 md:py-4 bg-slate-50 border-2 border-slate-100 rounded-xl md:rounded-2xl outline-none focus:border-emerald-500 focus:bg-white transition-all font-bold text-sm md:text-base" 
+                      className="w-full pl-11 pr-4 py-3 md:py-4 bg-slate-50 border-2 border-slate-100 rounded-xl md:rounded-2xl outline-none focus:border-emerald-500 focus:bg-white transition-all font-bold text-sm md:text-base text-slate-800" 
                       value={inputToken} 
                       onChange={(e) => setInputToken(e.target.value)} 
                       required 
@@ -1110,7 +1134,7 @@
                 
                 <button 
                   type="submit" 
-                  className="w-full bg-emerald-600 text-white py-4 md:py-5 rounded-xl md:rounded-2xl font-black text-base md:text-lg shadow-xl hover:bg-emerald-700 transition-all active:scale-95"
+                  className="w-full bg-emerald-600 text-white py-4 md:py-5 rounded-xl md:rounded-2xl font-black text-base md:text-lg shadow-xl hover:bg-emerald-700 transition-all active:scale-95 touch-manipulation"
                 >
                   Masuk Sekarang
                 </button>
@@ -1121,11 +1145,11 @@
       }
 
       return (
-        <div className="min-h-screen bg-[#F8FAFC] flex text-slate-800 font-sans relative">
+        <div className="min-h-screen bg-[#F8FAFC] flex text-slate-800 font-sans relative pt-safe">
           
           {/* Notifikasi Peringatan Khusus Pengguna iPhone/Safari */}
           {showIosHint && (
-            <div className="fixed top-4 left-1/2 transform -translate-x-1/2 bg-blue-600 text-white px-6 py-4 rounded-2xl shadow-2xl z-[100] font-bold text-xs md:text-sm text-center w-[90%] max-w-sm border-2 border-blue-400 transition-all">
+            <div className="fixed top-safe left-1/2 transform -translate-x-1/2 mt-4 bg-blue-600 text-white px-6 py-4 rounded-2xl shadow-2xl z-[100] font-bold text-xs md:text-sm text-center w-[90%] max-w-sm border-2 border-blue-400 transition-all">
               📱 Pengguna Safari/iPhone:<br/>Pastikan <b>Tombol Mute/Hening</b> di samping HP Anda <b>dimatikan</b> agar suara mufrodat terdengar!
             </div>
           )}
@@ -1152,14 +1176,14 @@
             <div className="p-6 border-t border-slate-50 space-y-4">
               <button 
                 onClick={handleLogout} 
-                className="w-full py-3 bg-red-50 rounded-xl text-red-500 flex justify-center items-center space-x-2 font-bold transition-colors hover:bg-red-100"
+                className="w-full py-3 bg-red-50 rounded-xl text-red-500 flex justify-center items-center space-x-2 font-bold transition-colors hover:bg-red-100 active:scale-95 touch-manipulation"
               >
                 <LogOut size={18} />
                 <span className={!isSidebarOpen ? 'hidden' : ''}>Keluar</span>
               </button>
               <button 
                 onClick={() => setIsSidebarOpen(!isSidebarOpen)} 
-                className="w-full py-2 bg-slate-50 rounded-xl text-slate-400 flex justify-center hover:text-emerald-600 transition-colors"
+                className="w-full py-2 bg-slate-50 rounded-xl text-slate-400 flex justify-center hover:text-emerald-600 transition-colors active:scale-95 touch-manipulation"
               >
                 <ChevronRight className={`transition-transform ${isSidebarOpen ? 'rotate-180' : ''}`} />
               </button>
@@ -1181,7 +1205,7 @@
                 <button
                   key={item.id}
                   onClick={() => { setActiveTab(item.id); if (item.id !== 'home' && quizStep !== 0) setQuizStep(0); }}
-                  className={`flex flex-col items-center p-2 rounded-xl transition-all ${isActive ? 'text-emerald-600' : 'text-slate-400 hover:text-emerald-500'}`}
+                  className={`flex flex-col items-center p-2 rounded-xl transition-all active:scale-90 touch-manipulation ${isActive ? 'text-emerald-600' : 'text-slate-400 hover:text-emerald-500'}`}
                 >
                   <div className={`p-1.5 rounded-lg mb-1 ${isActive ? 'bg-emerald-50' : ''}`}>
                     <IconComponent size={20} />
@@ -1193,7 +1217,7 @@
           </nav>
 
           {/* Main Content */}
-          <main className="flex-1 h-screen overflow-y-auto p-4 md:p-10 pb-24 md:pb-10 relative">
+          <main className="flex-1 h-screen overflow-y-auto p-4 md:p-10 pb-28 md:pb-10 relative">
             
             <header className="flex justify-between items-center mb-8 md:mb-10 no-print">
               <div className="flex items-center space-x-3 md:space-x-4">
@@ -1212,7 +1236,7 @@
                  </span>
               </div>
               {/* Tombol Logout Khusus HP */}
-              <button onClick={handleLogout} className="md:hidden p-2.5 bg-red-50 text-red-500 rounded-xl hover:bg-red-100 transition-colors">
+              <button onClick={handleLogout} className="md:hidden p-2.5 bg-red-50 text-red-500 rounded-xl hover:bg-red-100 transition-colors active:scale-95 touch-manipulation">
                 <LogOut size={18} />
               </button>
             </header>
@@ -1220,11 +1244,12 @@
             {/* Tab Beranda */}
             {activeTab === 'home' && (
               <div className="space-y-6 md:space-y-8 animate-in fade-in duration-500">
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4 md:gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 md:gap-6">
                   {Object.keys(MUFRODAT_DB).map((day) => (
                     <div 
                       key={day} 
-                      className={`group relative rounded-[2rem] md:rounded-[3rem] p-6 md:p-8 overflow-hidden shadow-xl md:shadow-2xl transition-all hover:-translate-y-2 ${selectedDay == day ? 'bg-emerald-600 text-white shadow-emerald-100' : 'bg-white text-slate-800 border border-slate-100'}`}
+                      className={`group relative rounded-[2rem] md:rounded-[3rem] p-6 md:p-8 overflow-hidden shadow-xl md:shadow-2xl transition-all hover:-translate-y-2 cursor-pointer ${selectedDay == day ? 'bg-emerald-600 text-white shadow-emerald-100' : 'bg-white text-slate-800 border border-slate-100'}`}
+                      onClick={() => { setSelectedDay(parseInt(day)); setActiveTab('materi'); window.scrollTo(0,0); }}
                     >
                       <div className="relative z-10">
                         <div className="flex justify-between items-start mb-4">
@@ -1242,8 +1267,7 @@
                           {MUFRODAT_DB[day].title}
                         </h2>
                         <button 
-                          onClick={() => { setSelectedDay(parseInt(day)); setActiveTab('materi'); window.scrollTo(0,0); }}
-                          className={`w-full py-2.5 md:py-3 rounded-xl font-black text-[10px] shadow-lg md:shadow-xl transition-all active:scale-95 ${selectedDay == day ? 'bg-white text-emerald-700 hover:bg-emerald-50' : 'bg-emerald-600 text-white hover:bg-emerald-700'}`}
+                          className={`w-full py-2.5 md:py-3 rounded-xl font-black text-[10px] shadow-lg md:shadow-xl transition-all active:scale-95 touch-manipulation ${selectedDay == day ? 'bg-white text-emerald-700 hover:bg-emerald-50' : 'bg-emerald-600 text-white hover:bg-emerald-700'}`}
                         >
                           Pilih Misi {day}
                         </button>
@@ -1311,7 +1335,7 @@
                   <div className="flex justify-end sm:self-center mt-2 sm:mt-0">
                     <button 
                       onClick={() => {setActiveTab('rekam'); window.scrollTo(0,0);}} 
-                      className="w-full sm:w-auto bg-emerald-600 text-white px-6 py-3.5 md:py-3 rounded-xl font-black text-sm shadow-lg hover:bg-emerald-700 transition-all active:scale-95 text-center flex justify-center items-center gap-2"
+                      className="w-full sm:w-auto bg-emerald-600 text-white px-6 py-3.5 md:py-3 rounded-xl font-black text-sm shadow-lg hover:bg-emerald-700 transition-all active:scale-95 touch-manipulation text-center flex justify-center items-center gap-2"
                     >
                       <Mic size={18}/> Setor Hafalan
                     </button>
@@ -1328,7 +1352,7 @@
                         </div>
                         <button 
                           onClick={() => playAudio(item.arab)}
-                          className="p-2.5 md:p-3 bg-emerald-50 text-emerald-600 rounded-full hover:bg-emerald-100 hover:text-emerald-700 hover:scale-110 active:scale-95 transition-all shadow-sm"
+                          className="p-2.5 md:p-3 bg-emerald-50 text-emerald-600 rounded-full hover:bg-emerald-100 hover:text-emerald-700 hover:scale-110 active:scale-95 touch-manipulation transition-all shadow-sm"
                           title="Dengarkan Cara Baca"
                         >
                           <Volume2 size={20} className="md:w-6 md:h-6" />
@@ -1355,7 +1379,7 @@
             {activeTab === 'rekam' && (
               <div className="max-w-2xl mx-auto pb-10">
                 
-                {/* Step 0: Pemanasan Suara (Speech Recognition Quiz) */}
+                {/* Step 0: Pemanasan Suara */}
                 {rekamStep === 0 && voiceQuizList.length > 0 && (
                   <div className="bg-white p-8 md:p-12 rounded-[2.5rem] md:rounded-[3.5rem] border border-slate-100 shadow-xl md:shadow-2xl text-center relative overflow-hidden animate-in fade-in duration-500">
                     
@@ -1381,7 +1405,7 @@
                       <button
                         onClick={startListeningVoiceQuiz}
                         disabled={isListeningQuiz}
-                        className={`w-20 h-20 md:w-24 md:h-24 rounded-full flex items-center justify-center text-white transition-all shadow-xl
+                        className={`w-20 h-20 md:w-24 md:h-24 rounded-full flex items-center justify-center text-white transition-all shadow-xl touch-manipulation active:scale-95
                           ${isListeningQuiz 
                             ? 'bg-red-500 animate-pulse ring-8 ring-red-500/30 scale-105' 
                             : 'bg-gradient-to-br from-blue-500 to-blue-700 hover:scale-105 shadow-blue-200'}`}
@@ -1406,7 +1430,7 @@
 
                     <button 
                       onClick={() => setRekamStep(1)} 
-                      className="text-slate-400 text-xs md:text-sm font-bold underline hover:text-slate-600 transition-colors"
+                      className="text-slate-400 text-xs md:text-sm font-bold underline hover:text-slate-600 transition-colors active:text-slate-800 touch-manipulation p-2"
                     >
                       Lewati Pemanasan & Langsung Setor Hafalan
                     </button>
@@ -1431,7 +1455,7 @@
                       <div className="flex flex-col items-center justify-center gap-6">
                         <button
                           onClick={isRecording ? stopRecording : startRecording}
-                          className={`w-24 h-24 md:w-28 md:h-28 rounded-[2rem] flex items-center justify-center text-white shadow-xl transition-all ${isRecording ? 'bg-red-500 animate-pulse scale-110 shadow-red-200' : 'bg-emerald-600 hover:bg-emerald-700 hover:scale-105 shadow-emerald-200'}`}
+                          className={`w-24 h-24 md:w-28 md:h-28 rounded-[2rem] flex items-center justify-center text-white shadow-xl transition-all touch-manipulation active:scale-95 ${isRecording ? 'bg-red-500 animate-pulse scale-110 shadow-red-200' : 'bg-emerald-600 hover:bg-emerald-700 hover:scale-105 shadow-emerald-200'}`}
                         >
                           {isRecording ? <Square size={32} className="md:w-10 md:h-10" /> : <Mic size={40} className="md:w-12 md:h-12" />}
                         </button>
@@ -1442,15 +1466,15 @@
                     ) : (
                       <div className="flex flex-col items-center justify-center gap-6 w-full animate-in zoom-in-95">
                         <div className="bg-slate-50 p-4 rounded-2xl w-full max-w-md border border-slate-200 shadow-sm">
-                           <audio src={audioUrl} controls className="w-full h-12" />
+                           <audio src={audioUrl} controls className="w-full h-12 outline-none" />
                         </div>
                         
                         {!isAudioSent ? (
                           <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md">
-                             <button onClick={deleteRecording} disabled={isProcessing} className="flex-1 py-3 md:py-4 bg-white border border-slate-200 text-slate-600 rounded-xl md:rounded-2xl font-black hover:bg-red-50 hover:text-red-500 hover:border-red-200 transition-colors flex justify-center items-center gap-2 disabled:opacity-50">
+                             <button onClick={deleteRecording} disabled={isProcessing} className="flex-1 py-3 md:py-4 bg-white border border-slate-200 text-slate-600 rounded-xl md:rounded-2xl font-black hover:bg-red-50 hover:text-red-500 hover:border-red-200 transition-colors flex justify-center items-center gap-2 disabled:opacity-50 touch-manipulation active:scale-95">
                                <Trash2 size={18} /> Ulangi
                              </button>
-                             <button onClick={submitHafalan} disabled={isProcessing} className="flex-[2] py-3 md:py-4 bg-emerald-600 text-white rounded-xl md:rounded-2xl font-black shadow-lg hover:bg-emerald-700 transition-colors flex justify-center items-center gap-2 disabled:opacity-50">
+                             <button onClick={submitHafalan} disabled={isProcessing} className="flex-[2] py-3 md:py-4 bg-emerald-600 text-white rounded-xl md:rounded-2xl font-black shadow-lg hover:bg-emerald-700 transition-colors flex justify-center items-center gap-2 disabled:opacity-50 touch-manipulation active:scale-95">
                                {isProcessing ? "Mengirim..." : "Kirim Rekaman"} <ArrowRight size={18}/>
                              </button>
                           </div>
@@ -1459,7 +1483,7 @@
                              <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-4 rounded-xl font-bold flex justify-center items-center gap-2 shadow-sm">
                                 <CheckCircle size={24} /> Rekaman Berhasil Dikirim!
                              </div>
-                             <button onClick={() => { setActiveTab('quiz'); setQuizStep(0); setCurrentQuestion(0); setScore(0); window.scrollTo(0,0); }} className="w-full py-4 bg-slate-900 text-white rounded-xl font-bold shadow-lg hover:bg-emerald-600 transition-colors flex justify-center items-center gap-2 mt-2">
+                             <button onClick={() => { setActiveTab('quiz'); setQuizStep(0); setCurrentQuestion(0); setScore(0); window.scrollTo(0,0); }} className="w-full py-4 bg-slate-900 text-white rounded-xl font-bold shadow-lg hover:bg-emerald-600 transition-colors flex justify-center items-center gap-2 mt-2 touch-manipulation active:scale-95">
                                Lanjut ke Kuis <ArrowRight size={18}/>
                              </button>
                           </div>
@@ -1488,8 +1512,14 @@
                        <p className="text-slate-500 mt-4 text-sm md:text-base px-2 md:px-6">Selesaikan 10 soal tantangan campuran.</p>
                      </div>
                      <button 
-                       onClick={() => { setQuizStep(1); setScore(0); setCurrentQuestion(0); }} 
-                       className="w-full bg-emerald-600 text-white py-5 md:py-6 rounded-2xl md:rounded-[2rem] font-black text-lg md:text-xl shadow-xl hover:bg-emerald-700 transition-all active:scale-95 shadow-emerald-200"
+                       onClick={() => { 
+                         const shuffled = [...currentMufrodatList].sort(() => Math.random() - 0.5);
+                         setQuizQuestions(shuffled);
+                         setQuizStep(1); 
+                         setScore(0); 
+                         setCurrentQuestion(0); 
+                       }} 
+                       className="w-full bg-emerald-600 text-white py-5 md:py-6 rounded-2xl md:rounded-[2rem] font-black text-lg md:text-xl shadow-xl hover:bg-emerald-700 transition-all active:scale-95 touch-manipulation shadow-emerald-200"
                      >
                        Mulai Kuis Sekarang
                      </button>
@@ -1515,21 +1545,20 @@
                        // Pilihan Ganda
                        <div className="text-center animate-in fade-in duration-300" key={`mc-${currentQuestion}`}>
                          <p className="text-xs md:text-sm font-black text-slate-400 uppercase mb-3 md:mb-4 tracking-widest">Apa arti kata ini?</p>
-                         <h1 className="text-5xl md:text-6xl font-arabic font-bold text-slate-800 mb-10 pb-2">{currentMufrodatList[currentQuestion].arab}</h1>
+                         <h1 className="text-5xl md:text-6xl font-arabic font-bold text-slate-800 mb-10 pb-2">{quizQuestions[currentQuestion]?.arab}</h1>
                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
                            {[
-                             currentMufrodatList[currentQuestion].arti, 
-                             currentMufrodatList[(currentQuestion + 1) % 10]?.arti || "Buku", 
-                             currentMufrodatList[(currentQuestion + 2) % 10]?.arti || "Pena", 
-                             currentMufrodatList[(currentQuestion + 3) % 10]?.arti || "Meja"
+                             quizQuestions[currentQuestion]?.arti, 
+                             quizQuestions[(currentQuestion + 1) % 10]?.arti || "Buku", 
+                             quizQuestions[(currentQuestion + 2) % 10]?.arti || "Pena", 
+                             quizQuestions[(currentQuestion + 3) % 10]?.arti || "Meja"
                            ].sort().map((opt, i) => (
                              <button 
                                key={i} 
-                               onClick={() => handleChoiceAnswer(opt === currentMufrodatList[currentQuestion].arti)} 
+                               onClick={() => handleChoiceAnswer(opt === quizQuestions[currentQuestion]?.arti)} 
                                disabled={isProcessing}
-                               className="w-full p-4 md:p-6 bg-slate-50 border-2 border-slate-100 rounded-2xl md:rounded-[1.5rem] font-black text-slate-700 hover:border-emerald-500 hover:text-emerald-700 hover:bg-emerald-50 transition-all text-base md:text-xl active:scale-95 disabled:opacity-50 text-left pl-6 relative group overflow-hidden"
+                               className="w-full p-4 md:p-6 bg-slate-50 border-2 border-slate-100 rounded-2xl md:rounded-[1.5rem] font-black text-slate-700 hover:border-emerald-500 hover:text-emerald-700 hover:bg-emerald-50 transition-all text-base md:text-xl active:scale-95 touch-manipulation disabled:opacity-50"
                              >
-                               <span className="absolute left-0 top-0 bottom-0 w-2 bg-transparent group-hover:bg-emerald-500 transition-colors"></span>
                                {opt}
                              </button>
                            ))}
@@ -1540,7 +1569,7 @@
                        <div className="text-center animate-in slide-in-from-right-8 duration-300" key={`sc-${currentQuestion}`}>
                          <p className="text-xs md:text-sm font-black text-slate-400 uppercase mb-3 md:mb-4 tracking-widest">Susun Huruf Untuk Arti:</p>
                          <h2 className="text-2xl md:text-4xl font-black text-emerald-600 mb-8 md:mb-10 tracking-tight">
-                           "{currentMufrodatList[currentQuestion].arti}"
+                           "{quizQuestions[currentQuestion]?.arti}"
                          </h2>
                          
                          <div className="flex justify-center flex-wrap gap-2 md:gap-4 mb-8 md:mb-12 min-h-[70px] md:min-h-[90px] p-4 md:p-6 bg-slate-50 rounded-2xl md:rounded-[2rem] border-2 border-dashed border-slate-200" dir="rtl">
@@ -1552,7 +1581,7 @@
                                key={i} 
                                onClick={() => removeLetterFromGuess(l)} 
                                disabled={isProcessing}
-                               className="w-12 h-12 md:w-16 md:h-16 bg-white border-2 border-emerald-500 text-emerald-700 rounded-xl md:rounded-2xl flex items-center justify-center text-2xl md:text-3xl font-arabic shadow-sm hover:border-red-500 hover:text-red-500 hover:bg-red-50 transition-all transform hover:scale-110 disabled:opacity-50"
+                               className="w-12 h-12 md:w-16 md:h-16 bg-white border-2 border-emerald-500 text-emerald-700 rounded-xl md:rounded-2xl flex items-center justify-center text-2xl md:text-3xl font-arabic shadow-sm hover:border-red-500 hover:text-red-500 hover:bg-red-50 transition-all transform hover:scale-110 active:scale-95 touch-manipulation disabled:opacity-50"
                              >
                                {l.char}
                              </button>
@@ -1565,7 +1594,7 @@
                                key={i} 
                                onClick={() => addLetterToGuess(l)} 
                                disabled={isProcessing}
-                               className="w-12 h-12 md:w-16 md:h-16 bg-emerald-600 text-white rounded-xl md:rounded-2xl flex items-center justify-center text-2xl md:text-3xl font-arabic shadow-md hover:bg-emerald-700 active:scale-90 transition-all disabled:opacity-50"
+                               className="w-12 h-12 md:w-16 md:h-16 bg-emerald-600 text-white rounded-xl md:rounded-2xl flex items-center justify-center text-2xl md:text-3xl font-arabic shadow-md hover:bg-emerald-700 active:scale-90 touch-manipulation transition-all disabled:opacity-50"
                              >
                                {l.char}
                              </button>
@@ -1576,7 +1605,7 @@
                            <button 
                              onClick={() => { setScrambledLetters([...scrambledLetters, ...currentGuess]); setCurrentGuess([]); }} 
                              disabled={isProcessing}
-                             className="flex-1 py-3 md:py-4 bg-slate-100 text-slate-500 rounded-xl md:rounded-2xl font-black flex items-center justify-center space-x-2 hover:bg-slate-200 transition-colors text-sm md:text-base disabled:opacity-50"
+                             className="flex-1 py-3 md:py-4 bg-slate-100 text-slate-500 rounded-xl md:rounded-2xl font-black flex items-center justify-center space-x-2 hover:bg-slate-200 transition-colors text-sm md:text-base active:scale-95 touch-manipulation disabled:opacity-50"
                            >
                              <RefreshCw size={18}/>
                              <span>Ulang</span>
@@ -1584,7 +1613,7 @@
                            <button 
                              onClick={checkScrambleAnswer} 
                              disabled={scrambledLetters.length > 0 || isProcessing} 
-                             className="flex-[2] py-3 md:py-4 bg-emerald-600 text-white rounded-xl md:rounded-2xl font-black shadow-lg disabled:opacity-50 disabled:shadow-none hover:bg-emerald-700 transition-all active:scale-95 text-sm md:text-base"
+                             className="flex-[2] py-3 md:py-4 bg-emerald-600 text-white rounded-xl md:rounded-2xl font-black shadow-lg disabled:opacity-50 disabled:shadow-none hover:bg-emerald-700 transition-all active:scale-95 touch-manipulation text-sm md:text-base"
                            >
                              Kunci Jawaban
                            </button>
@@ -1605,7 +1634,7 @@
                      <button 
                        onClick={submitQuiz} 
                        disabled={isProcessing}
-                       className="w-full max-w-sm mx-auto bg-emerald-600 text-white py-4 rounded-xl font-bold text-lg shadow-lg hover:bg-emerald-700 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                       className="w-full max-w-sm mx-auto bg-emerald-600 text-white py-4 rounded-xl font-bold text-lg shadow-lg hover:bg-emerald-700 transition-all active:scale-95 touch-manipulation disabled:opacity-50 flex items-center justify-center gap-2"
                      >
                        {isProcessing ? "Menyimpan Data..." : "Kirim Kuis Sekarang"} <ArrowRight size={20}/>
                      </button>
@@ -1633,13 +1662,13 @@
                      <div className="flex flex-col sm:flex-row gap-3 md:gap-4">
                        <button 
                          onClick={() => setQuizStep(0)} 
-                         className="flex-1 py-4 md:py-5 bg-white border-2 border-slate-100 rounded-xl md:rounded-2xl font-black text-slate-600 hover:bg-slate-50 transition-colors"
+                         className="flex-1 py-4 md:py-5 bg-white border-2 border-slate-100 rounded-xl md:rounded-2xl font-black text-slate-600 hover:bg-slate-50 transition-colors active:scale-95 touch-manipulation"
                        >
                          Coba Lagi
                        </button>
                        <button 
                          onClick={() => {setActiveTab('riwayat'); window.scrollTo(0,0);}} 
-                         className="flex-1 py-4 md:py-5 bg-emerald-600 text-white rounded-xl md:rounded-2xl font-black shadow-lg hover:bg-emerald-700 transition-all"
+                         className="flex-1 py-4 md:py-5 bg-emerald-600 text-white rounded-xl md:rounded-2xl font-black shadow-lg hover:bg-emerald-700 transition-all active:scale-95 touch-manipulation"
                        >
                          Lihat Riwayat
                        </button>
@@ -1658,7 +1687,7 @@
                     {myScores.length > 0 && (
                       <button
                         onClick={handleResetHistory}
-                        className="flex items-center justify-center gap-2 bg-red-50 text-red-500 px-4 py-2 rounded-xl border border-red-100 font-bold text-[10px] md:text-sm shadow-sm hover:bg-red-100 transition-colors"
+                        className="flex items-center justify-center gap-2 bg-red-50 text-red-500 px-4 py-2 rounded-xl border border-red-100 font-bold text-[10px] md:text-sm shadow-sm hover:bg-red-100 transition-colors active:scale-95 touch-manipulation"
                       >
                         <Trash2 size={16} /> Reset
                       </button>

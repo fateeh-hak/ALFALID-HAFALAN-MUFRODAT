@@ -623,23 +623,26 @@
 
         recognition.onresult = (event) => {
           const transcript = event.results[0][0].transcript;
-          setRecognizedText(transcript);
-
+          
           const targetWord = voiceQuizList[currentVoiceQuestion].arab;
 
           const normalize = (text) => {
             if (!text) return "";
-            return text.replace(/[\u064B-\u065F]/g, '')
-                       .replace(/[أإآ]/g, 'ا')
-                       .replace(/ة/g, 'ه')
-                       .replace(/ى/g, 'ي')
-                       .replace(/\s+/g, '');
+            // Normalisasi lengkap untuk mempermudah pencocokan suara
+            return text.replace(/[\u064B-\u065F\u0640]/g, '') // Hapus harakat dan tatweel
+                       .replace(/[أإآ]/g, 'ا') // Samakan variasi Alif
+                       .replace(/ة/g, 'ه') // Tetap samakan Ta Marbutoh sbg Ha untuk pencocokan (sering terdeteksi Ha krn Waqf)
+                       .replace(/ى/g, 'ي') // Alif maksura ke Ya
+                       .replace(/[ؤئ]/g, 'ء') // Samakan variasi Hamzah
+                       .replace(/\s+/g, ''); // Hapus spasi
           };
 
           const normTarget = normalize(targetWord);
           const normInput = normalize(transcript);
 
           if (normInput.includes(normTarget) || normTarget.includes(normInput)) {
+            // JIKA BENAR: Tampilkan teks target yang ASLI (dengan Ta Marbutoh dan harakat lengkap)
+            setRecognizedText(targetWord); 
             setVoiceQuizFeedback('correct');
             setTimeout(() => {
               if (currentVoiceQuestion < 4) {
@@ -651,6 +654,9 @@
               }
             }, 1500);
           } else {
+            // JIKA SALAH: Tampilkan transcript STT tapi ubah visual 'Ha' di akhir kata menjadi 'Ta Marbutoh' agar konsisten
+            const visualTranscript = transcript.replace(/ه(?=\s|$)/g, 'ة');
+            setRecognizedText(visualTranscript);
             setVoiceQuizFeedback('wrong');
           }
         };

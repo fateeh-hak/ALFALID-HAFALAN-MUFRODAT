@@ -112,6 +112,21 @@
     // GANTI URL DI BAWAH INI DENGAN URL WEB APP GOOGLE SCRIPT ANDA
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwj9D5J53kOgOIEfXhGgcn3Vc2dvh0-ifxbVm1XIVjnQ2KYLvjDPgeX8P5FNh4QQtyPCg/exec"; 
 
+    // --- UTILITIES SINKRONISASI RIWAYAT MAKSIMAL ---
+    const getHistoryKey = (name) => {
+      if (!name) return 'alfal_history_unknown';
+      // Menghilangkan spasi & mengubah huruf menjadi kecil agar "Budi" dan "budi " tetap terbaca sama
+      return `alfal_history_${name.trim().toLowerCase()}`;
+    };
+
+    const syncLocalAndState = (name) => {
+      if (!name) return [];
+      const localKey = getHistoryKey(name);
+      const localData = JSON.parse(localStorage.getItem(localKey)) || [];
+      localData.sort((a, b) => b.timestamp - a.timestamp);
+      return localData;
+    };
+
     // Database Mufrodat Berdasarkan Hari (1-30)
     const MUFRODAT_DB = {
       1: {
@@ -539,7 +554,11 @@
     const App = () => {
       const [user, setUser] = useState(null);
       const [isLoggedIn, setIsLoggedIn] = useState(() => !!localStorage.getItem('alfal_session_name'));
-      const [participantName, setParticipantName] = useState(() => localStorage.getItem('alfal_session_name') || "");
+      
+      const [participantName, setParticipantName] = useState(() => {
+        return localStorage.getItem('alfal_session_name') || "";
+      });
+      
       const [inputToken, setInputToken] = useState("");
       const [loginError, setLoginError] = useState("");
       
@@ -551,7 +570,10 @@
       const [quizStep, setQuizStep] = useState(0); 
       const [currentQuestion, setCurrentQuestion] = useState(0);
       const [score, setScore] = useState(0);
-      const [myScores, setMyScores] = useState([]);
+      
+      // Sinkronisasi data sejak pertama aplikasi dirender
+      const [myScores, setMyScores] = useState(() => syncLocalAndState(localStorage.getItem('alfal_session_name')));
+      
       const [quizQuestions, setQuizQuestions] = useState([]);
 
       // Scramble Game States
@@ -587,240 +609,34 @@
         return myScores.some(s => s.day == (day - 1) && s.score >= 80);
       };
 
-      useEffect(() => {
-        const fetchVoices = () => setAvailableVoices(window.speechSynthesis.getVoices());
-        if ('speechSynthesis' in window) {
-          fetchVoices();
-          window.speechSynthesis.onvoiceschanged = fetchVoices;
-        }
-      }, []);
-
-      // Menyiapkan 5 soal pemanasan setiap kali buka tab Rekam
-      useEffect(() => {
-        if (activeTab === 'rekam') {
-          setRekamStep(0);
-          setCurrentVoiceQuestion(0);
-          setRecognizedText("");
-          setVoiceQuizFeedback(null);
-          deleteRecording();
-          
-          const allData = MUFRODAT_DB[selectedDay].data;
-          const shuffled = [...allData].sort(() => 0.5 - Math.random());
-          setVoiceQuizList(shuffled.slice(0, 5));
-        }
-      }, [activeTab, selectedDay]);
-
-      // FUNGSI STT (Speech-to-Text) untuk Kuis Suara
-      const startListeningVoiceQuiz = () => {
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SpeechRecognition) {
-          alert("Browser Anda belum mendukung pengenalan suara otomatis. Anda akan langsung dialihkan ke Setor Hafalan.");
-          setRekamStep(1);
+      // FUNGSI UNTUK TEXT-TO-SPEECH
+      const playAudio = (text) => {
+        if (!('speechSynthesis' in window)) {
+          alert("Maaf, peramban kamu tidak mendukung fitur suara.");
           return;
         }
 
-        setIsListeningQuiz(true);
-        setRecognizedText("");
-        setVoiceQuizFeedback(null);
-
-        const recognition = new SpeechRecognition();
-        recognition.lang = 'ar-SA';
-        recognition.interimResults = false;
-        recognition.maxAlternatives = 1;
-
-        recognition.onresult = (event) => {
-          const transcript = event.results[0][0].transcript;
-          
-          const targetWord = voiceQuizList[currentVoiceQuestion].arab;
-
-          const normalize = (text) => {
-            if (!text) return "";
-            // Normalisasi lengkap untuk mempermudah pencocokan suara
-            return text.replace(/[\u064B-\u065F\u0640]/g, '') // Hapus harakat dan tatweel
-                       .replace(/[أإآ]/g, 'ا') // Samakan variasi Alif
-                       .replace(/ة/g, 'ه') // Tetap samakan Ta Marbutoh sbg Ha untuk pencocokan (sering terdeteksi Ha krn Waqf)
-                       .replace(/ى/g, 'ي') // Alif maksura ke Ya
-                       .replace(/[ؤئ]/g, 'ء') // Samakan variasi Hamzah
-                       .replace(/\s+/g, ''); // Hapus spasi
-          };
-
-          const normTarget = normalize(targetWord);
-          const normInput = normalize(transcript);
-
-          if (normInput.includes(normTarget) || normTarget.includes(normInput)) {
-            // JIKA BENAR: Tampilkan teks target yang ASLI (dengan Ta Marbutoh dan harakat lengkap)
-            setRecognizedText(targetWord); 
-            setVoiceQuizFeedback('correct');
-            setTimeout(() => {
-              if (currentVoiceQuestion < 4) {
-                setCurrentVoiceQuestion(q => q + 1);
-                setRecognizedText("");
-                setVoiceQuizFeedback(null);
-              } else {
-                setRekamStep(1); 
-              }
-            }, 1500);
-          } else {
-            // JIKA SALAH: Tampilkan transcript STT tapi ubah visual 'Ha' di akhir kata menjadi 'Ta Marbutoh' agar konsisten
-            const visualTranscript = transcript.replace(/ه(?=\s|$)/g, 'ة');
-            setRecognizedText(visualTranscript);
-            setVoiceQuizFeedback('wrong');
-          }
-        };
-
-        recognition.onerror = (event) => {
-          console.error("Speech Recognition Error:", event.error);
-          if(event.error === 'not-allowed') {
-             alert("Akses mikrofon ditolak! Izinkan mikrofon di pengaturan browser.");
-          }
-          setVoiceQuizFeedback('error');
-          setIsListeningQuiz(false);
-        };
-
-        recognition.onend = () => {
-          setIsListeningQuiz(false);
-        };
-
-        recognition.start();
-      };
-
-      const startRecording = async () => {
-        try {
-          if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-            alert("Maaf, browser Anda tidak mendukung fitur rekam suara. Gunakan Safari/Chrome terbaru.");
-            return;
-          }
-
-          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-          
-          let options = {};
-          if (typeof MediaRecorder !== 'undefined' && typeof MediaRecorder.isTypeSupported === 'function') {
-            if (MediaRecorder.isTypeSupported('audio/webm')) {
-              options = { mimeType: 'audio/webm' };
-            } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
-              options = { mimeType: 'audio/mp4' };
-            } else if (MediaRecorder.isTypeSupported('audio/aac')) {
-              options = { mimeType: 'audio/aac' };
-            }
-          }
-
-          let mediaRecorder;
-          try {
-            mediaRecorder = new MediaRecorder(stream, options);
-          } catch (e) {
-            mediaRecorder = new MediaRecorder(stream);
-          }
-
-          mediaRecorderRef.current = mediaRecorder;
-          audioChunksRef.current = [];
-
-          mediaRecorder.ondataavailable = (event) => {
-            if (event.data && event.data.size > 0) {
-              audioChunksRef.current.push(event.data);
-            }
-          };
-
-          mediaRecorder.onstop = () => {
-            const actualMimeType = mediaRecorder.mimeType || 'audio/mp4';
-            const audioBlob = new Blob(audioChunksRef.current, { type: actualMimeType });
-            const url = URL.createObjectURL(audioBlob);
-            setAudioUrl(url);
-            
-            const reader = new FileReader();
-            reader.readAsDataURL(audioBlob);
-            reader.onloadend = () => {
-              const base64data = reader.result.split(',')[1]; 
-              setAudioBase64(base64data);
-            };
-
-            stream.getTracks().forEach(track => track.stop());
-          };
-
-          mediaRecorder.start();
-          setIsRecording(true);
-        } catch (err) {
-          console.error("Gagal mengakses mikrofon:", err);
-          if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-              alert("Akses mikrofon ditolak!\n\nMohon izinkan akses mikrofon di pengaturan browser Anda.");
-          } else {
-              alert("Gagal merekam.\n\nPastikan link dibuka di Safari/Chrome, BUKAN browser bawaan aplikasi lain.");
-          }
-        }
-      };
-
-      const stopRecording = () => {
-        if (mediaRecorderRef.current && isRecording) {
-          mediaRecorderRef.current.stop();
-          setIsRecording(false);
-        }
-      };
-
-      const deleteRecording = () => {
-        setAudioUrl(null);
-        setAudioBase64("");
-        setIsAudioSent(false);
-        audioChunksRef.current = [];
-      };
-
-      const playAudio = (text) => {
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-        const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+        if (isIOS && !hasShownIosHint) {
+           setShowIosHint(true);
+           setHasShownIosHint(true);
+           setTimeout(() => setShowIosHint(false), 6000);
+        }
+
+        window.speechSynthesis.cancel();
         
-        if ((isIOS || isSafari) && !hasShownIosHint) {
-            setShowIosHint(true);
-            setHasShownIosHint(true);
-            setTimeout(() => setShowIosHint(false), 7000);
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'ar-SA';
+        utterance.rate = 0.85; 
+        utterance.pitch = 1;
+        utterance.volume = 1;
+
+        if (availableVoices.length > 0) {
+          const arabicVoice = availableVoices.find(voice => voice.lang.includes('ar'));
+          if (arabicVoice) utterance.voice = arabicVoice;
         }
-
-        if (isIOS || isSafari) {
-           fallbackAudio(text + " .");
-           return;
-        }
-
-        try {
-          const clearText = text + " .";
-          const url = `https://translate.googleapis.com/translate_tts?client=gtx&ie=UTF-8&tl=ar&q=${encodeURIComponent(clearText)}`;
-          const audio = new Audio(url);
-          audio.playbackRate = 0.85; 
-          audio.load(); 
-          
-          const playPromise = audio.play();
-          if (playPromise !== undefined) {
-            playPromise.catch((err) => {
-              fallbackAudio(clearText);
-            });
-          }
-        } catch (e) {
-          fallbackAudio(text + " .");
-        }
-      };
-
-      const fallbackAudio = (text) => {
-        if ('speechSynthesis' in window) {
-          window.speechSynthesis.cancel();
-          
-          const utterance = new SpeechSynthesisUtterance(text);
-          utterance.lang = 'ar-SA'; 
-          utterance.rate = 0.85; 
-
-          const arabicVoices = availableVoices.filter(v => v.lang.startsWith('ar'));
-          
-          let targetVoice = arabicVoices.find(v => 
-            v.name.toLowerCase().includes('female') || 
-            v.name.toLowerCase().includes('laila') || 
-            v.name.toLowerCase().includes('maged') || 
-            v.name.toLowerCase().includes('tarik') || 
-            v.name.toLowerCase().includes('zeina')
-          );
-
-          if (targetVoice) {
-            utterance.voice = targetVoice;
-          } else if (arabicVoices.length > 0) {
-            utterance.voice = arabicVoices[0];
-          }
-
-          window.speechSynthesis.speak(utterance);
-        }
+        
+        window.speechSynthesis.speak(utterance);
       };
 
       const unlockAudioContext = () => {
@@ -846,35 +662,36 @@
         return () => unsubscribe();
       }, []);
 
+      // EFEK SINKRONISASI FIRESTORE DAN LOCAL STORAGE (MAKSIMAL)
       useEffect(() => {
-        if (!user || !isLoggedIn || !participantName) return;
+        if (!isLoggedIn || !participantName) return;
 
-        const localHistoryKey = `alfal_history_${participantName}`;
-        const localHistory = JSON.parse(localStorage.getItem(localHistoryKey)) || [];
+        const cleanName = participantName.trim().toLowerCase();
+        const localHistoryKey = getHistoryKey(participantName);
 
-        // Langsung set dari localStorage agar riwayat tetap muncul saat reload & misi tidak terkunci
-        localHistory.sort((a, b) => b.timestamp - a.timestamp);
-        setMyScores(localHistory);
+        // Pastikan kita muat kembali dari memori HP sebagai lapis pengaman pertama
+        setMyScores(syncLocalAndState(participantName));
 
-        if (db) {
+        if (db && user) {
           const scoresCol = collection(db, 'artifacts', appId, 'public', 'data', 'scores');
           const q = query(scoresCol);
           
           const unsubscribe = onSnapshot(q, (snapshot) => {
             const allScores = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            
+            // Saring dan paskan format agar persis sama dengan memori HP
             const filtered = allScores
-              .filter(s => s.name === participantName)
+              .filter(s => s.name && s.name.trim().toLowerCase() === cleanName)
               .map(s => ({
                 ...s,
-                // Pastikan format waktu dari Firestore diubah ke milidetik
-                timestamp: s.timestamp?.seconds ? s.timestamp.seconds * 1000 : (typeof s.timestamp === 'number' ? s.timestamp : Date.now())
+                timestamp: typeof s.timestamp === 'number' ? s.timestamp : (s.timestamp?.seconds ? s.timestamp.seconds * 1000 : Date.now())
               }));
             
-            // Gabungkan data agar aman (Local + Server)
-            const currentLocal = JSON.parse(localStorage.getItem(localHistoryKey)) || [];
+            const latestLocal = JSON.parse(localStorage.getItem(localHistoryKey)) || [];
             const combinedMap = new Map();
             
-            currentLocal.forEach(item => combinedMap.set(`${item.day}-${item.score}`, item));
+            // Gabungkan menggunakan Hari-Skor sebagai pengunci unik agar data tidak kembar
+            latestLocal.forEach(item => combinedMap.set(`${item.day}-${item.score}`, item));
             filtered.forEach(item => combinedMap.set(`${item.day}-${item.score}`, item));
 
             const combined = Array.from(combinedMap.values());
@@ -890,6 +707,7 @@
         }
       }, [user, isLoggedIn, participantName, db]);
 
+      // MUAT PERTANYAAN KUIS
       useEffect(() => {
         if (quizStep === 1 && currentQuestion % 2 !== 0 && quizQuestions.length > 0) {
           const target = quizQuestions[currentQuestion].arab;
@@ -901,13 +719,115 @@
         }
       }, [currentQuestion, quizStep, selectedDay, quizQuestions]);
 
+      // LOGIKA REKAM HAFALAN
+      const startRecording = async () => {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          const mediaRecorder = new MediaRecorder(stream);
+          mediaRecorderRef.current = mediaRecorder;
+          audioChunksRef.current = [];
+
+          mediaRecorder.ondataavailable = (event) => {
+            if (event.data.size > 0) audioChunksRef.current.push(event.data);
+          };
+
+          mediaRecorder.onstop = () => {
+            const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+            const url = URL.createObjectURL(audioBlob);
+            setAudioUrl(url);
+            
+            const reader = new FileReader();
+            reader.readAsDataURL(audioBlob);
+            reader.onloadend = () => setAudioBase64(reader.result);
+            
+            stream.getTracks().forEach(track => track.stop());
+          };
+
+          mediaRecorder.start();
+          setIsRecording(true);
+        } catch (error) {
+          alert("Gagal mengakses mikrofon. Pastikan kamu sudah memberikan izin akses mikrofon di perambanmu.");
+          console.error(error);
+        }
+      };
+
+      const stopRecording = () => {
+        if (mediaRecorderRef.current && isRecording) {
+          mediaRecorderRef.current.stop();
+          setIsRecording(false);
+        }
+      };
+
+      const deleteRecording = () => {
+        setAudioUrl(null);
+        setAudioBase64("");
+        setIsAudioSent(false);
+      };
+
+      // FUNGSI PENGENAL SUARA UNTUK LATIHAN
+      const startListeningVoiceQuiz = () => {
+         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+         if (!SpeechRecognition) {
+            alert("Maaf, peramban kamu tidak mendukung fitur koreksi suara (Gunakan Google Chrome). Namun kamu tetap bisa menggunakan Setor Hafalan di langkah berikutnya.");
+            setRekamStep(1);
+            return;
+         }
+
+         setIsListeningQuiz(true);
+         setRecognizedText("");
+         setVoiceQuizFeedback(null);
+
+         const recognition = new SpeechRecognition();
+         recognition.lang = 'ar-SA';
+         recognition.interimResults = false;
+         recognition.maxAlternatives = 1;
+
+         recognition.start();
+
+         recognition.onresult = (event) => {
+            const speechResult = event.results[0][0].transcript;
+            setRecognizedText(speechResult);
+            
+            // Pengecekan tanpa harakat untuk akurasi lebih baik
+            const targetWord = voiceQuizList[currentVoiceQuestion].arab.replace(/[\u064B-\u065F\u0670]/g, '');
+            const spokenWord = speechResult.replace(/[\u064B-\u065F\u0670]/g, '');
+
+            if (spokenWord.includes(targetWord) || targetWord.includes(spokenWord)) {
+               setVoiceQuizFeedback('correct');
+               setTimeout(() => {
+                 if (currentVoiceQuestion < 4) {
+                    setCurrentVoiceQuestion(q => q + 1);
+                    setRecognizedText("");
+                    setVoiceQuizFeedback(null);
+                 } else {
+                    setRekamStep(1); 
+                 }
+               }, 1500);
+            } else {
+               setVoiceQuizFeedback('wrong');
+            }
+         };
+
+         recognition.onspeechend = () => {
+            recognition.stop();
+            setIsListeningQuiz(false);
+         };
+
+         recognition.onerror = (event) => {
+            console.error("Speech recognition error", event.error);
+            setVoiceQuizFeedback('error');
+            setIsListeningQuiz(false);
+         };
+      };
+
+      // --- LOGIKA LOGIN / LOGOUT ANTI-HILANG ---
       const handleLogin = (e) => {
         e.preventDefault();
-        
-        // Membuka kunci audio di browser mobile
         unlockAudioContext();
 
-        if (!participantName.trim()) {
+        const cleanName = participantName.trim();
+        
+        if (!cleanName) {
           setLoginError("Nama lengkap tidak boleh kosong.");
           return;
         }
@@ -916,13 +836,19 @@
           return;
         }
         
-        localStorage.setItem('alfal_session_name', participantName);
+        setParticipantName(cleanName);
+        localStorage.setItem('alfal_session_name', cleanName);
+        
+        // Panggil fungsi sinkronisasi utama
+        setMyScores(syncLocalAndState(cleanName));
+
         setIsLoggedIn(true);
         setLoginError("");
       };
 
       const handleLogout = () => {
         if (window.confirm("Apakah kamu yakin ingin keluar?")) {
+          // Hanya menghapus identitas Sesi, bukan membuang riwayatnya
           localStorage.removeItem('alfal_session_name');
           setIsLoggedIn(false);
           setParticipantName("");
@@ -934,7 +860,7 @@
 
       const handleResetHistory = () => {
         if (window.confirm("Yakin ingin menghapus semua riwayat belajar? Data yang dihapus tidak dapat dikembalikan.")) {
-          const localHistoryKey = `alfal_history_${participantName}`;
+          const localHistoryKey = getHistoryKey(participantName);
           localStorage.removeItem(localHistoryKey);
           setMyScores([]);
         }
@@ -975,8 +901,9 @@
         if (isProcessing) return;
         setIsProcessing(true);
         try {
+          const cleanName = participantName.trim();
           const category = `Hafalan Hari ${selectedDay}: ${MUFRODAT_DB[selectedDay].title}`;
-          await sendToGoogleSheet(participantName, "-", category, audioBase64, selectedDay, "Hafalan");
+          await sendToGoogleSheet(cleanName, "-", category, audioBase64, selectedDay, "Hafalan");
           setIsAudioSent(true);
         } catch (error) {
           alert("Gagal mengirim rekaman ke server. Pastikan koneksi internet lancar lalu coba lagi.");
@@ -988,36 +915,37 @@
       const submitQuiz = async () => {
         if (isProcessing) return;
         setIsProcessing(true);
+        
+        const cleanName = participantName.trim();
         const finalScore = Math.round((score / 10) * 100); 
         const category = `Kuis Hari ${selectedDay}: ${MUFRODAT_DB[selectedDay].title}`;
         
         try {
-          const localHistoryKey = `alfal_history_${participantName}`;
-          const existingHistory = JSON.parse(localStorage.getItem(localHistoryKey)) || [];
+          const localHistoryKey = getHistoryKey(cleanName);
+          let existingHistory = JSON.parse(localStorage.getItem(localHistoryKey)) || [];
+          
           const newRecord = {
-            name: participantName,
+            name: cleanName,
             score: finalScore,
             category: category,
             day: selectedDay,
             timestamp: Date.now() 
           };
-          localStorage.setItem(localHistoryKey, JSON.stringify([...existingHistory, newRecord]));
           
-          setMyScores(prev => [newRecord, ...prev].sort((a,b) => b.timestamp - a.timestamp));
+          // Mencegah nilai terdobel untuk hari dan skor yang sama
+          existingHistory = existingHistory.filter(item => !(item.day === selectedDay && item.score === finalScore));
+          
+          const updatedHistory = [...existingHistory, newRecord].sort((a,b) => b.timestamp - a.timestamp);
+          localStorage.setItem(localHistoryKey, JSON.stringify(updatedHistory));
+          setMyScores(updatedHistory);
 
           if(db && user) {
             const scoresCol = collection(db, 'artifacts', appId, 'public', 'data', 'scores');
-            await addDoc(scoresCol, {
-              name: participantName,
-              score: finalScore,
-              category: category,
-              day: selectedDay,
-              timestamp: serverTimestamp()
-            });
+            await addDoc(scoresCol, newRecord); 
           }
           
           try {
-            await sendToGoogleSheet(participantName, finalScore, category, "", selectedDay, "Kuis");
+            await sendToGoogleSheet(cleanName, finalScore, category, "", selectedDay, "Kuis");
           } catch(e) {
             console.warn("Gagal simpan ke Sheet.");
           }
@@ -1083,6 +1011,34 @@
           setIsProcessing(false);
         }, 150);
       };
+
+      // Efek Pengenalan Suara Sedia
+      useEffect(() => {
+        if (activeTab === 'rekam' && quizStep === 0) {
+           const shuffled = [...currentMufrodatList].sort(() => Math.random() - 0.5).slice(0, 5);
+           setVoiceQuizList(shuffled);
+           setCurrentVoiceQuestion(0);
+           setRecognizedText("");
+           setVoiceQuizFeedback(null);
+           
+           if (!('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)) {
+              setRekamStep(1);
+           } else {
+              setRekamStep(0);
+           }
+        }
+      }, [activeTab, selectedDay]);
+
+      // Minta suara perangkat
+      useEffect(() => {
+        const loadVoices = () => {
+          setAvailableVoices(window.speechSynthesis.getVoices());
+        };
+        loadVoices();
+        if (window.speechSynthesis.onvoiceschanged !== undefined) {
+          window.speechSynthesis.onvoiceschanged = loadVoices;
+        }
+      }, []);
 
       const SidebarItem = ({ id, icon: Icon, label }) => (
         <button
@@ -1251,7 +1207,7 @@
             <header className="flex justify-between items-center mb-8 md:mb-10 no-print">
               <div className="flex items-center space-x-3 md:space-x-4">
                 <div className="w-10 h-10 md:w-12 md:h-12 bg-emerald-100 rounded-xl md:rounded-2xl flex items-center justify-center text-emerald-700 font-black text-lg md:text-xl border border-emerald-200 shadow-sm shrink-0">
-                  {participantName[0]}
+                  {participantName[0] || 'A'}
                 </div>
                 <div>
                   <h1 className="text-xl md:text-2xl font-black text-slate-900 tracking-tight leading-tight">Ahlan, {participantName.split(' ')[0]}!</h1>
